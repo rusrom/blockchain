@@ -1,8 +1,15 @@
+from collections import OrderedDict
+from hashlib import sha256
+
+from hash_util import hash_block
+
 MINING_REWARD = 10
+DIFFICULTY = '00'
+
 blockchain = []
 open_transactions = []
 owner = 'rusrom'
-participants = set()
+participants = {owner}
 
 
 def get_last_blockchain_value():
@@ -19,6 +26,12 @@ def verify_transaction(transaction):
     return sender_balance >= transaction['amount']
 
 
+def verify_transactions():
+    '''Verify ALL open transaction in pull
+    '''
+    return all([verify_transaction(tx) for tx in open_transactions])
+
+
 def add_transaction(recipient, amount, sender=owner):
     '''Append a new value as well as the last blockchain value to the blockchain
     Like adding transaction to the pool in real life
@@ -27,54 +40,66 @@ def add_transaction(recipient, amount, sender=owner):
         :amount: The amount of coins that should be sent
         :sender: The sender(default=owner) of the coins
     '''
-    transaction = {
-        'sender': sender,
-        'recipient': recipient,
-        'amount': amount
-    }
+    # transaction = {
+    #     'sender': sender,
+    #     'recipient': recipient,
+    #     'amount': amount
+    # }
+    transaction = OrderedDict([
+        ('sender', sender),
+        ('recipient', recipient),
+        ('amount', amount)
+    ])
 
     if verify_transaction(transaction):
+        # Add to pull
         open_transactions.append(transaction)
+
+        # Add unique participant to set of all participants of blockchain
         participants.add(sender)
         participants.add(recipient)
+
         return True
     return False
 
 
-def hash_block(previous_block):
-    return ''.join([str(val) for val in previous_block.values()])
+def valid_proof(transactions, last_block_hash, proof):
+    '''Check amount of leading zerroes in hash'''
+    guess = (str(transactions) + str(last_block_hash) + str(proof)).encode()
+    guess_hash = sha256(guess).hexdigest()
+    print('valid_proof() >>>', guess_hash)
+    return guess_hash.startswith(DIFFICULTY)
 
 
-def get_balance(participant):
-    tx_inputs = [
-        tx['amount']
-        for block in blockchain for tx in block['transactions']
-        if tx['recipient'] == participant
-    ]
+def proof_of_work():
+    '''Struggle with DIFFICULTY seeking correct proof'''
+    last_block = blockchain[-1]
+    last_block_hash = hash_block(last_block)
 
-    tx_outputs = [
-        tx['amount']
-        for block in blockchain for tx in block['transactions']
-        if tx['sender'] == participant
-    ]
-
-    # All sending transactions in open_transactions(pool)
-    tx_open = [
-        tx['amount']
-        for tx in open_transactions
-        if tx['sender'] == participant
-    ]
-
-    return sum(tx_inputs) - sum(tx_outputs) - sum(tx_open)
+    proof = 0
+    while not valid_proof(open_transactions, last_block_hash, proof):
+        proof += 1
+    return proof
 
 
 def mine_block():
     # Candy for miner
-    reward_transaction = {
-        'sender': 'MINING_REWARD_BOT',
-        'recipient': owner,
-        'amount': MINING_REWARD
-    }
+    # reward_transaction = {
+    #     'sender': 'MINING_REWARD_BOT',
+    #     'recipient': owner,
+    #     'amount': MINING_REWARD
+    # }
+    reward_transaction = OrderedDict([
+        ('sender', 'MINING_REWARD_BOT'),
+        ('recipient', owner),
+        ('amount', MINING_REWARD)
+    ])
+
+    # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
+    if blockchain:
+        proof = proof_of_work()
+
+    # Add reward transaction
     open_transactions.append(reward_transaction)
 
     if blockchain:
@@ -85,15 +110,45 @@ def mine_block():
             'previous_block_hash': previous_block_hash,
             'index': len(blockchain),
             'transactions': open_transactions[:],
+            'proof': proof,
         }
     else:
         block = {
             'previous_block_hash': 'Genesis Block',
             'index': 0,
             'transactions': open_transactions[:],
+            'proof': 100,
         }
     blockchain.append(block)
     open_transactions.clear()
+
+
+def get_balance(participant):
+    '''Get balance of participant coins
+    Input amount - Outpu amount - Amount of coins in open transaction (in pull)
+    '''
+    tx_inputs = [
+        tx['amount']
+        for block in blockchain
+        for tx in block['transactions']
+        if tx['recipient'] == participant
+    ]
+
+    tx_outputs = [
+        tx['amount']
+        for block in blockchain
+        for tx in block['transactions']
+        if tx['sender'] == participant
+    ]
+
+    # Participant's All sending transactions that are in open_transactions(pool)
+    tx_open = [
+        tx['amount']
+        for tx in open_transactions
+        if tx['sender'] == participant
+    ]
+
+    return sum(tx_inputs) - sum(tx_outputs) - sum(tx_open)
 
 
 def get_user_choice():
@@ -104,6 +159,8 @@ def get_user_choice():
             2: Mine block
             3: Show blockchain
             4: Show participants
+            5: Check transaction validity
+            6: Show participants balances
             h: Hack blockchaine
             q: Quit
         ----------------------------''')
@@ -126,14 +183,27 @@ def print_blockchain_elements():
 
 
 def verify_chain():
+    '''Verify each block['previous_block_hash'] vith calculated hash_block() of previous block'''
     for previous_block, block in enumerate(blockchain[1:]):
+        # Verify previous block hash
         if block['previous_block_hash'] != hash_block(blockchain[previous_block]):
+            return False
+        # Verify PoW of current block
+        print('195 Verify chain')
+        if not valid_proof(block['transactions'][:-1], block['previous_block_hash'], block['proof']):
+            print('Proof of Work is invalid')
             return False
     return True
 
 
 def show_participants():
     print(participants)
+
+
+def show_participants_balances():
+    '''Show balaces for all participants of blockchain'''
+    for participant in participants:
+        print(f'{participant}: {get_balance(participant)} coins')
 
 
 while True:
@@ -151,6 +221,16 @@ while True:
         print_blockchain_elements()
     elif user_choice == '4':
         show_participants()
+    elif user_choice == '5':
+        if open_transactions:
+            if verify_transactions():
+                print('All transactions are valid')
+            else:
+                print('[ERROR] There are invalid open transactions in pull')
+        else:
+            print('No one open transaction yet')
+    elif user_choice == '6':
+        show_participants_balances()
     elif user_choice == 'q':
         break
     elif user_choice == 'h':
@@ -170,6 +250,6 @@ while True:
     if not verify_chain():
         raise Exception('[CRITICAL ERROR] Blockchaine corrupted!')
 
-    print('Balance:', get_balance('rusrom'))
+    print(f'Balance of {owner}: {get_balance(owner):.2f}')
 
 print('Done!')
