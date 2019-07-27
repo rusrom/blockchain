@@ -1,3 +1,5 @@
+import json
+import pickle
 from collections import OrderedDict
 from hashlib import sha256
 
@@ -10,6 +12,69 @@ blockchain = []
 open_transactions = []
 owner = 'rusrom'
 participants = {owner}
+
+
+def load_data():
+    with open('blockchain.txt') as f:
+        file_content = f.readlines()
+
+    global blockchain
+    global open_transactions
+
+    blockchain = json.loads(file_content[0])
+    updated_blockchain = []
+    for block in blockchain:
+        updated_block = {
+            'previous_block_hash': block['previous_block_hash'],
+            'index': block['index'],
+            'transactions': [
+                OrderedDict([
+                    ('sender', tx['sender']),
+                    ('recipient', tx['recipient']),
+                    ('amount', tx['amount'])
+                ])
+                for tx in block['transactions']
+            ],
+            'proof': block['proof']
+        }
+        updated_blockchain.append(updated_block)
+    blockchain = updated_blockchain[:]
+
+    open_transactions = [
+        OrderedDict([
+            ('sender', tx['sender']),
+            ('recipient', tx['recipient']),
+            ('amount', tx['amount'])
+        ])
+        for tx in json.loads(file_content[1])
+    ]
+
+
+def load_data_picle():
+    with open('blockchain.p', 'rb') as f:
+        file_content = pickle.loads(f.read())
+
+    print(file_content)
+    global blockchain
+    global open_transactions
+
+    blockchain = file_content['blockchain']
+    open_transactions = file_content['open_transactions']
+
+
+def save_data():
+    with open('blockchain.txt', 'w') as f:
+        f.write(json.dumps(blockchain) + '\n')
+        f.write(json.dumps(open_transactions))
+
+
+def save_data_pickle():
+    with open('blockchain.p', 'wb') as f:
+        save_data = {
+            'blockchain': blockchain,
+            'open_transactions': open_transactions
+        }
+        f.write(pickle.dumps(save_data))
 
 
 def get_last_blockchain_value():
@@ -52,12 +117,14 @@ def add_transaction(recipient, amount, sender=owner):
     ])
 
     if verify_transaction(transaction):
-        # Add to pull
+        # Add transaction to pull
         open_transactions.append(transaction)
 
         # Add unique participant to set of all participants of blockchain
         participants.add(sender)
         participants.add(recipient)
+
+        save_data()
 
         return True
     return False
@@ -121,6 +188,7 @@ def mine_block():
         }
     blockchain.append(block)
     open_transactions.clear()
+    save_data()
 
 
 def get_balance(participant):
@@ -161,6 +229,7 @@ def get_user_choice():
             4: Show participants
             5: Check transaction validity
             6: Show participants balances
+            7: Show open transactions (pool)
             h: Hack blockchaine
             q: Quit
         ----------------------------''')
@@ -182,11 +251,20 @@ def print_blockchain_elements():
             print(block)
 
 
+def print_open_transactions():
+    if not open_transactions:
+        print('No open transactions yet')
+    else:
+        for open_tx in open_transactions:
+            print(open_tx)
+
+
 def verify_chain():
     '''Verify each block['previous_block_hash'] vith calculated hash_block() of previous block'''
     for previous_block, block in enumerate(blockchain[1:]):
         # Verify previous block hash
         if block['previous_block_hash'] != hash_block(blockchain[previous_block]):
+            print('Previous block hash is invalid')
             return False
         # Verify PoW of current block
         print('195 Verify chain')
@@ -204,6 +282,10 @@ def show_participants_balances():
     '''Show balaces for all participants of blockchain'''
     for participant in participants:
         print(f'{participant}: {get_balance(participant)} coins')
+
+
+# Load blockchain and open transaction from file
+load_data()
 
 
 while True:
@@ -231,6 +313,8 @@ while True:
             print('No one open transaction yet')
     elif user_choice == '6':
         show_participants_balances()
+    elif user_choice == '7':
+        print_open_transactions()
     elif user_choice == 'q':
         break
     elif user_choice == 'h':
