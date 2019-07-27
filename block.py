@@ -8,3 +8,6 @@ class Block:
         self.transactions = transactions
         self.nonce = nonce
         self.timestamp = timestamp
+
+    def __repr__(self):
+        return f'<Block Class index: {self.index}, prev_hash: {self.previous_hash}, txs: {self.transactions}, nonce: {self.nonce}>'
