@@ -15,8 +15,12 @@ participants = {owner}
 
 
 def load_data():
-    with open('blockchain.txt') as f:
-        file_content = f.readlines()
+    try:
+        with open('blockchain.txt') as f:
+            file_content = f.readlines()
+    except FileNotFoundError:
+        print('No dumpfile blockchain.txt detected')
+        return
 
     global blockchain
     global open_transactions
@@ -131,10 +135,11 @@ def add_transaction(recipient, amount, sender=owner):
 
 
 def valid_proof(transactions, last_block_hash, proof):
-    '''Check amount of leading zerroes in hash'''
+    '''Check amount of leading zerroes in hash
+    Only after getting True inside this function
+    new block will be added to the blockchain'''
     guess = (str(transactions) + str(last_block_hash) + str(proof)).encode()
     guess_hash = sha256(guess).hexdigest()
-    print('valid_proof() >>>', guess_hash)
     return guess_hash.startswith(DIFFICULTY)
 
 
