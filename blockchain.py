@@ -15,16 +15,24 @@ participants = {owner}
 
 
 def load_data():
+    global blockchain
+    global open_transactions
+
     try:
         with open('blockchain.txt') as f:
             file_content = f.readlines()
     except FileNotFoundError:
-        print('No dumpfile blockchain.txt detected')
+        print('Genesis block innit...')
+        genesis_block = {
+            'previous_block_hash': 'Genesis_Block',
+            'index': 0,
+            'transactions': open_transactions[:],
+            'proof': 0,
+        }
+        blockchain.append(genesis_block)
         return
 
-    global blockchain
-    global open_transactions
-
+    # Read data from dump file
     blockchain = json.loads(file_content[0])
     updated_blockchain = []
     for block in blockchain:
@@ -140,6 +148,7 @@ def valid_proof(transactions, last_block_hash, proof):
     new block will be added to the blockchain'''
     guess = (str(transactions) + str(last_block_hash) + str(proof)).encode()
     guess_hash = sha256(guess).hexdigest()
+    print(guess_hash)
     return guess_hash.startswith(DIFFICULTY)
 
 
@@ -156,11 +165,6 @@ def proof_of_work():
 
 def mine_block():
     # Candy for miner
-    # reward_transaction = {
-    #     'sender': 'MINING_REWARD_BOT',
-    #     'recipient': owner,
-    #     'amount': MINING_REWARD
-    # }
     reward_transaction = OrderedDict([
         ('sender', 'MINING_REWARD_BOT'),
         ('recipient', owner),
@@ -168,31 +172,24 @@ def mine_block():
     ])
 
     # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
-    if blockchain:
-        proof = proof_of_work()
+    proof = proof_of_work()
 
     # Add reward transaction
     open_transactions.append(reward_transaction)
 
-    if blockchain:
-        previous_block = blockchain[-1]
-        previous_block_hash = hash_block(previous_block)
+    # Create block
+    block = {
+        'previous_block_hash': hash_block(blockchain[-1]),
+        'index': len(blockchain),
+        'transactions': open_transactions[:],
+        'proof': proof,
+    }
 
-        block = {
-            'previous_block_hash': previous_block_hash,
-            'index': len(blockchain),
-            'transactions': open_transactions[:],
-            'proof': proof,
-        }
-    else:
-        block = {
-            'previous_block_hash': 'Genesis Block',
-            'index': 0,
-            'transactions': open_transactions[:],
-            'proof': 100,
-        }
+    # Add block to blockchain
     blockchain.append(block)
+    # Clear open transactions
     open_transactions.clear()
+    # Dump blockchain and open transactions to file
     save_data()
 
 
@@ -260,6 +257,7 @@ def print_open_transactions():
     if not open_transactions:
         print('No open transactions yet')
     else:
+        print('Open transactions:')
         for open_tx in open_transactions:
             print(open_tx)
 
