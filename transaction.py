@@ -8,7 +8,7 @@ class Transaction:
         self.amount = amount
 
     def __repr__(self):
-        return f'{self.to_ordered_dict()}'
+        return str(self.__dict__)
 
     def to_ordered_dict(self):
         return OrderedDict([

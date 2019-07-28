@@ -13,3 +13,7 @@ def hash_block(block):
     ]
 
     return sha256(json.dumps(block_to_dictionary, sort_keys=True).encode()).hexdigest()
+
+
+def get_sha256(string_value):
+    return sha256(string_value.encode()).hexdigest()
