@@ -33,7 +33,22 @@ class Verification:
         sender_balance = get_balance(transaction.sender)
         return sender_balance >= transaction.amount
 
-    def verify_transactions(self, open_transactions, get_balance):
+    # def verify_transactions(self, open_transactions, get_balance):
+    #     '''Verify ALL open transaction in pull'''
+    #     return all([self.verify_transaction(tx, get_balance) for tx in open_transactions])
+
+    def verify_transactions(self, open_transactions, get_sender_balance, get_sender_transactions_coins):
         '''Verify ALL open transaction in pull'''
-        # print([self.verify_transaction(tx, get_balance) for tx in open_transactions])
-        return all([self.verify_transaction(tx, get_balance) for tx in open_transactions])
+
+        # All participants(senders) in open transactions
+        participants = set([tx.sender for tx in open_transactions])
+
+        # # Print balance and coins in transactions for each participant
+        # for participant in participants:
+        #     print(f'Balance of {participant}: {get_sender_balance(participant):.2f} papcoins')
+        #     print(f'Coins in open txs for {participant}: {get_sender_transactions_coins(participant):.2f} papcoins')
+
+        return all([
+            get_sender_balance(participant) >= get_sender_transactions_coins(participant)
+            for participant in participants
+        ])

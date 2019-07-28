@@ -1,6 +1,6 @@
 import json
 import pickle
-from hashlib import sha256
+# from hashlib import sha256
 
 from hash_util import hash_block
 from block import Block
@@ -206,7 +206,35 @@ def get_balance(participant):
     ]
 
     return sum(tx_inputs) - sum(tx_outputs) - sum(tx_open)
-    # return sum(tx_inputs) - sum(tx_outputs)
+
+
+def get_sender_balance(participant):
+    '''Get balance of participant'''
+    tx_inputs = [
+        tx.amount
+        for block in blockchain
+        for tx in block.transactions
+        if tx.recipient == participant
+    ]
+
+    tx_outputs = [
+        tx.amount
+        for block in blockchain
+        for tx in block.transactions
+        if tx.sender == participant
+    ]
+
+    return sum(tx_inputs) - sum(tx_outputs)
+
+
+def get_sender_transactions_coins(participant):
+    '''Get participant coins in transactions'''
+    amounts_open_txs = [
+        tx.amount
+        for tx in open_transactions
+        if tx.sender == participant
+    ]
+    return sum(amounts_open_txs)
 
 
 def get_user_choice():
@@ -266,7 +294,7 @@ while True:
         print_blockchain_elements()
     elif user_choice == '4':
         if open_transactions:
-            if verifier.verify_transactions(open_transactions, get_balance):
+            if verifier.verify_transactions(open_transactions, get_sender_balance, get_sender_transactions_coins):
                 print('All transactions are valid')
             else:
                 print('[ERROR] There are invalid open transactions in pull')
