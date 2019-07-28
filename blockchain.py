@@ -27,7 +27,6 @@ class Blockchain:
         )
         self.chain = [self.genesis_block]
         self.load_data()
-        self.verifier = Verification()
         self.difficulty = DIFFICULTY
 
     def load_data(self):
@@ -104,7 +103,7 @@ class Blockchain:
         last_block_hash = hash_block(last_block)
 
         nonce = 0
-        while not self.verifier.valid_proof(self.open_transactions, last_block_hash, nonce, DIFFICULTY):
+        while not Verification.valid_proof(self.open_transactions, last_block_hash, nonce, DIFFICULTY):
             nonce += 1
         return nonce
 
@@ -181,7 +180,7 @@ class Blockchain:
             amount=amount
         )
 
-        if self.verifier.verify_transaction(transaction, self.get_balance):
+        if Verification.verify_transaction(transaction, self.get_balance):
             self.open_transactions.append(transaction)
             self.save_data()
             return True

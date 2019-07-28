@@ -9,7 +9,6 @@ class Node:
         # self.id = str(uuid4())
         self.id = 'rusrom'
         self.blockchain = Blockchain(self.id)
-        self.verifier = Verification()
 
     def get_user_choice(self):
         print(
@@ -61,7 +60,7 @@ class Node:
                 self.print_blockchain_elements()
             elif user_choice == '4':
                 if self.blockchain.open_transactions:
-                    if self.verifier.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_sender_balance, self.blockchain.get_sender_transactions_coins):
+                    if Verification.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_sender_balance, self.blockchain.get_sender_transactions_coins):
                         print('All transactions are valid')
                     else:
                         print('[ERROR] There are invalid open transactions in pull')
@@ -75,7 +74,7 @@ class Node:
                 print('Your input is invalid')
                 continue
 
-            if not self.verifier.verify_chain(self.blockchain.chain, self.blockchain.difficulty):
+            if not Verification.verify_chain(self.blockchain.chain, self.blockchain.difficulty):
                 raise Exception('[CRITICAL ERROR] Blockchaine corrupted!')
 
             print(f'Balance of {self.id}: {self.blockchain.get_balance(self.id):.2f}')
