@@ -18,16 +18,22 @@ DIFFICULTY = '0' * 2
 class Blockchain:
     def __init__(self, hosting_node_id):
         self.hosting_node_id = hosting_node_id
-        self.open_transactions = []
+        self.__open_transactions = []
         self.genesis_block = Block(
             index=0,
             previous_hash='Genesis_Block',
-            transactions=self.open_transactions[:],
+            transactions=self.__open_transactions[:],
             nonce=0
         )
-        self.chain = [self.genesis_block]
+        self.__chain = [self.genesis_block]
         self.load_data()
         self.difficulty = DIFFICULTY
+
+    def get_chain(self):
+        return self.__chain[:]
+
+    def get_open_transactions(self):
+        return self.__open_transactions[:]
 
     def load_data(self):
         try:
@@ -56,9 +62,9 @@ class Blockchain:
                 timestamp=block_dump['timestamp']
             )
             corrected_blockchain_dump.append(block)
-        self.chain = corrected_blockchain_dump[:]
+        self.__chain = corrected_blockchain_dump[:]
 
-        self.open_transactions = [
+        self.__open_transactions = [
             Transaction(
                 sender=tx['sender'],
                 recipient=tx['recipient'],
@@ -68,13 +74,13 @@ class Blockchain:
         ]
 
     def save_data(self):
-        blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.chain]
+        blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
 
         for block in blockchain_blocks_to_dict:
             transactions_to_dict = [tx.to_ordered_dict() for tx in block['transactions']]
             block['transactions'] = transactions_to_dict
 
-        open_transactions_to_dict = [tx.__dict__.copy() for tx in self.open_transactions]
+        open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
 
         with open('blockchain.txt', 'w') as f:
             f.write(json.dumps(blockchain_blocks_to_dict) + '\n')
@@ -84,26 +90,26 @@ class Blockchain:
         try:
             with open('blockchain.p', 'rb') as f:
                 file_content = pickle.loads(f.read())
-            self.chain = file_content['blockchain']
-            self.open_transactions = file_content['open_transactions']
+            self.__chain = file_content['blockchain']
+            self.__open_transactions = file_content['open_transactions']
         except FileNotFoundError:
             print('Genesis block innit...')
 
     def save_data_pickle(self):
         save_data = {
-            'blockchain': self.chain,
-            'open_transactions': self.open_transactions
+            'blockchain': self.__chain,
+            'open_transactions': self.__open_transactions
         }
         with open('blockchain.p', 'wb') as f:
             f.write(pickle.dumps(save_data))
 
     def proof_of_work(self):
         '''Struggle with DIFFICULTY seeking correct proof'''
-        last_block = self.chain[-1]
+        last_block = self.__chain[-1]
         last_block_hash = hash_block(last_block)
 
         nonce = 0
-        while not Verification.valid_proof(self.open_transactions, last_block_hash, nonce, DIFFICULTY):
+        while not Verification.valid_proof(self.__open_transactions, last_block_hash, nonce, DIFFICULTY):
             nonce += 1
         return nonce
 
@@ -113,14 +119,14 @@ class Blockchain:
         '''
         tx_inputs = [
             tx.amount
-            for block in self.chain
+            for block in self.__chain
             for tx in block.transactions
             if tx.recipient == participant
         ]
 
         tx_outputs = [
             tx.amount
-            for block in self.chain
+            for block in self.__chain
             for tx in block.transactions
             if tx.sender == participant
         ]
@@ -128,7 +134,7 @@ class Blockchain:
         # Participant's All sending transactions that are in open_transactions(pool)
         tx_open = [
             tx.amount
-            for tx in self.open_transactions
+            for tx in self.__open_transactions
             if tx.sender == participant
         ]
 
@@ -138,14 +144,14 @@ class Blockchain:
         '''Get balance of participant'''
         tx_inputs = [
             tx.amount
-            for block in self.chain
+            for block in self.__chain
             for tx in block.transactions
             if tx.recipient == participant
         ]
 
         tx_outputs = [
             tx.amount
-            for block in self.chain
+            for block in self.__chain
             for tx in block.transactions
             if tx.sender == participant
         ]
@@ -156,15 +162,15 @@ class Blockchain:
         '''Get participant coins in transactions'''
         amounts_open_txs = [
             tx.amount
-            for tx in self.open_transactions
+            for tx in self.__open_transactions
             if tx.sender == participant
         ]
         return sum(amounts_open_txs)
 
     def get_last_blockchain_value(self):
         '''Returns the last value of current blockchain'''
-        if self.chain:
-            return self.chain[-1]
+        if self.__chain:
+            return self.__chain[-1]
         return None
 
     def add_transaction(self, sender, recipient, amount):
@@ -181,7 +187,7 @@ class Blockchain:
         )
 
         if Verification.verify_transaction(transaction, self.get_balance):
-            self.open_transactions.append(transaction)
+            self.__open_transactions.append(transaction)
             self.save_data()
             return True
         return False
@@ -198,21 +204,21 @@ class Blockchain:
         nonce = self.proof_of_work()
 
         # Add reward transaction
-        self.open_transactions.append(reward_transaction)
+        self.__open_transactions.append(reward_transaction)
 
         # Create block
         block = Block(
-            index=len(self.chain),
-            previous_hash=hash_block(self.chain[-1]),
-            transactions=self.open_transactions[:],
+            index=len(self.__chain),
+            previous_hash=hash_block(self.__chain[-1]),
+            transactions=self.__open_transactions[:],
             nonce=nonce
         )
 
         # Add block to blockchain
-        self.chain.append(block)
+        self.__chain.append(block)
 
         # Clear open transactions
-        self.open_transactions.clear()
+        self.__open_transactions.clear()
 
         # Dump blockchain and open transactions to file
         self.save_data()

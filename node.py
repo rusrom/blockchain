@@ -24,18 +24,18 @@ class Node:
         return input('Your choice: ')
 
     def print_blockchain_elements(self):
-        if not self.blockchain.chain:
+        if not self.blockchain.get_chain():
             print('No blockchaine yet')
         else:
-            for block in self.blockchain.chain:
+            for block in self.blockchain.get_chain():
                 print(block)
 
     def print_open_transactions(self):
-        if not self.blockchain.open_transactions:
+        if not self.blockchain.get_open_transactions():
             print('No open transactions yet')
         else:
             print('Open transactions:')
-            for open_tx in self.blockchain.open_transactions:
+            for open_tx in self.blockchain.get_open_transactions():
                 print(open_tx)
 
     def get_transaction_value(self):
@@ -51,7 +51,7 @@ class Node:
             if user_choice == '1':
                 tx_recipient, tx_amount = self.get_transaction_value()
                 if self.blockchain.add_transaction(self.id, tx_recipient, tx_amount):
-                    print('Open transactions:', self.blockchain.open_transactions)
+                    print('Open transactions:', self.blockchain.get_open_transactions())
                 else:
                     print('Transaction failed!')
             elif user_choice == '2':
@@ -59,8 +59,8 @@ class Node:
             elif user_choice == '3':
                 self.print_blockchain_elements()
             elif user_choice == '4':
-                if self.blockchain.open_transactions:
-                    if Verification.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_sender_balance, self.blockchain.get_sender_transactions_coins):
+                if self.blockchain.get_open_transactions():
+                    if Verification.verify_transactions(self.blockchain.get_open_transactions(), self.blockchain.get_sender_balance, self.blockchain.get_sender_transactions_coins):
                         print('All transactions are valid')
                     else:
                         print('[ERROR] There are invalid open transactions in pull')
@@ -74,7 +74,7 @@ class Node:
                 print('Your input is invalid')
                 continue
 
-            if not Verification.verify_chain(self.blockchain.chain, self.blockchain.difficulty):
+            if not Verification.verify_chain(self.blockchain.get_chain(), self.blockchain.difficulty):
                 raise Exception('[CRITICAL ERROR] Blockchaine corrupted!')
 
             print(f'Balance of {self.id}: {self.blockchain.get_balance(self.id):.2f}')
