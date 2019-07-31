@@ -1,4 +1,4 @@
-from hash_util import hash_block, get_sha256
+from .hash_util import hash_block, get_sha256
 
 
 class Verification:

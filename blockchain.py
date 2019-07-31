@@ -2,10 +2,12 @@ import json
 import pickle
 # from hashlib import sha256
 
-from hash_util import hash_block
+# from hash_util import hash_block
+from utility.hash_util import hash_block
 from block import Block
 from transaction import Transaction
-from verification import Verification
+# from verification import Verification
+from utility.verification import Verification
 
 
 MINING_REWARD = 10
@@ -44,12 +46,13 @@ class Blockchain:
             return
 
         # Read data from dump file and convert them to right format
-        # List of Block Classes with transactions as list of Transaction Classes
         corrected_blockchain_dump = []
+        # Iterate through all blocks(dict) in list and transform them from dict to Block Class
         for block_dump in json.loads(file_content[0]):
             block = Block(
                 index=block_dump['index'],
                 previous_hash=block_dump['previous_hash'],
+                # All transactions from dict to Transaction Class
                 transactions=[
                     Transaction(
                         sender=tx['sender'],
@@ -74,12 +77,15 @@ class Blockchain:
         ]
 
     def save_data(self):
+        # Convert list of Block Classes to list of dicts
         blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
 
+        # Convert block transactions from Transaction Classes to dicts
         for block in blockchain_blocks_to_dict:
             transactions_to_dict = [tx.to_ordered_dict() for tx in block['transactions']]
             block['transactions'] = transactions_to_dict
 
+        # Convert list of open transactions from Transaction Classes to dicts
         open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
 
         with open('blockchain.txt', 'w') as f:
