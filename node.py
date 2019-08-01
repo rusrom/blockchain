@@ -1,15 +1,13 @@
-from uuid import uuid4
-
 from blockchain import Blockchain
-# from verification import Verification
+from wallet import Wallet
+
 from utility.verification import Verification
 
 
 class Node:
     def __init__(self):
-        # self.id = str(uuid4())
-        self.id = 'rusrom'
-        self.blockchain = Blockchain(self.id)
+        self.wallet = Wallet()
+        self.blockchain = Blockchain(self.wallet.address if self.wallet.public_key else None)
 
     def get_user_choice(self):
         print(
@@ -19,7 +17,9 @@ class Node:
                 2: Mine block
                 3: Show blockchain
                 4: Check transaction validity
-                5: Show open transactions (pool)
+                5: Show open transactions
+                6: Create New Wallet
+                7: Restore Existing Wallet
                 q: Quit
             ----------------------------''')
         return input('Your choice: ')
@@ -50,12 +50,22 @@ class Node:
             user_choice = self.get_user_choice()
 
             if user_choice == '1':
+                # Check wallet address
+                if not self.wallet.public_key:
+                    print('Unavailable add transaction without wallet address. Please create or restore wallet!')
+                    continue
+
                 tx_recipient, tx_amount = self.get_transaction_value()
-                if self.blockchain.add_transaction(self.id, tx_recipient, tx_amount):
+                if self.blockchain.add_transaction(self.wallet.address, tx_recipient, tx_amount):
                     print('Open transactions:', self.blockchain.get_open_transactions())
                 else:
                     print('Transaction failed!')
             elif user_choice == '2':
+                # Check wallet address
+                if not self.wallet.public_key:
+                    print('Unavailable mining without wallet address. Please create or restore wallet!')
+                    continue
+
                 self.blockchain.mine_block()
             elif user_choice == '3':
                 self.print_blockchain_elements()
@@ -69,6 +79,23 @@ class Node:
                     print('No one open transaction yet')
             elif user_choice == '5':
                 self.print_open_transactions()
+            elif user_choice == '6':
+                # Create Wallet
+                self.wallet.generate_keys()
+                print('New Generated Address:', self.wallet.address)
+                self.blockchain.hosting_node_id = self.wallet.address
+
+                # Save keys private and public keys
+                self.wallet.save_keys()
+            elif user_choice == '7':
+                # Restore Wallet
+                try:
+                    self.wallet.load_keys()
+                except FileNotFoundError:
+                    print('No key files detected! Key files in pem format must be inside key folder')
+                    continue
+
+                self.blockchain.hosting_node_id = self.wallet.address
             elif user_choice == 'q':
                 break
             else:
@@ -78,7 +105,10 @@ class Node:
             if not Verification.verify_chain(self.blockchain.get_chain(), self.blockchain.difficulty):
                 raise Exception('[CRITICAL ERROR] Blockchaine corrupted!')
 
-            print(f'Balance of {self.id}: {self.blockchain.get_balance(self.id):.2f}')
+            if self.wallet.public_key:
+                print(f'Balance of {self.wallet.address}: {self.blockchain.get_balance(self.wallet.address):.2f}')
+            else:
+                print('Warning, you have no wallet address')
 
         print('Exit the app.')
 

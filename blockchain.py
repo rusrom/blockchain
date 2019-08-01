@@ -186,6 +186,12 @@ class Blockchain:
             :recipient: The recipient of the coins
             :amount: The amount of coins that should be sent
         '''
+
+        # # Check wallet address
+        if not self.hosting_node_id:
+            print('Adding transactions without wallet address blocked. Please create or restore wallet!')
+            return False
+
         transaction = Transaction(
             sender=sender,
             recipient=recipient,
@@ -199,6 +205,11 @@ class Blockchain:
         return False
 
     def mine_block(self):
+        # Check wallet address. We can't mine without wallet address. We need get mining reward
+        if not self.hosting_node_id:
+            print('Can\'t mine without wallet address. Please create or restore wallet!')
+            return False
+
         # Reward transaction for miners
         reward_transaction = Transaction(
             sender='MINING_REWARD_BOT',
