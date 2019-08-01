@@ -1,3 +1,4 @@
+'''Provide verification helper mothods'''
 from .hash_util import hash_block, get_sha256
 
 

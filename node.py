@@ -80,8 +80,9 @@ class Node:
 
             print(f'Balance of {self.id}: {self.blockchain.get_balance(self.id):.2f}')
 
-        print('Done!')
+        print('Exit the app.')
 
 
-node = Node()
-node.listen_for_input()
+if __name__ == '__main__':
+    node = Node()
+    node.listen_for_input()
