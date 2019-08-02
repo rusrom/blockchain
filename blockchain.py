@@ -9,6 +9,8 @@ from transaction import Transaction
 # from verification import Verification
 from utility.verification import Verification
 
+from wallet import Wallet
+
 
 MINING_REWARD = 10
 DIFFICULTY = '0' * 2
@@ -18,8 +20,9 @@ DIFFICULTY = '0' * 2
 
 
 class Blockchain:
-    def __init__(self, hosting_node_id):
-        self.hosting_node_id = hosting_node_id
+    def __init__(self):
+        self.hosting_node_id = None
+        self.hosting_node_public_key = None
         self.__open_transactions = []
         self.genesis_block = Block(
             index=0,
@@ -213,6 +216,13 @@ class Blockchain:
         if not self.hosting_node_id:
             print('Can\'t mine without wallet address. Please create or restore wallet!')
             return False
+
+        # Check signatures opened transactions before adding to block
+        for tx in self.__open_transactions:
+            message = tx.sender + tx.recipient + str(tx.amount)
+            if not Wallet.check_signature(self.hosting_node_public_key, message, tx.signature):
+                print(f'Transaction to {tx.recipient} with amount: {tx.amount} has bad signature! Block not be mine')
+                return False
 
         # Reward transaction for miners
         reward_transaction = Transaction(

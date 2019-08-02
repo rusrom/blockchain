@@ -7,7 +7,8 @@ from utility.verification import Verification
 class Node:
     def __init__(self):
         self.wallet = Wallet()
-        self.blockchain = Blockchain(self.wallet.address if self.wallet.public_key else None)
+        # TODO: Implement adding public key object if wallet exists
+        self.blockchain = Blockchain()
 
     def get_user_choice(self):
         print(
@@ -59,8 +60,8 @@ class Node:
                 tx_recipient, tx_amount = self.get_transaction_value()
 
                 # Sign transaction
-                message_for_sign = self.wallet.address + tx_recipient + str(tx_amount)
-                signature = self.wallet.sign_transaction(message_for_sign)
+                message = self.wallet.address + tx_recipient + str(tx_amount)
+                signature = self.wallet.sign_transaction(message)
 
                 # Adding new Transaction
                 if self.blockchain.add_transaction(self.wallet.address, signature, tx_recipient, tx_amount):
@@ -91,6 +92,7 @@ class Node:
                 self.wallet.generate_keys()
                 print('New Generated Address:', self.wallet.address)
                 self.blockchain.hosting_node_id = self.wallet.address
+                self.blockchain.hosting_node_public_key = self.wallet.public_key
 
                 # Save keys private and public keys
                 self.wallet.save_keys()
@@ -101,8 +103,9 @@ class Node:
                 except FileNotFoundError:
                     print('No key files detected! Key files in pem format must be inside key folder')
                     continue
-
+                print('Restored Address:', self.wallet.address)
                 self.blockchain.hosting_node_id = self.wallet.address
+                self.blockchain.hosting_node_public_key = self.wallet.public_key
             elif user_choice == 'q':
                 break
             else:

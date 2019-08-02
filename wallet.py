@@ -123,20 +123,20 @@ class Wallet:
         return signature.hex()
 
     @classmethod
-    def check_signature(cls, public_key_obj, signature_string):
+    def check_signature(cls, public_key_obj, message, signature_string):
         # Return the binary hex data represented by the hexadecimal string.
         signature = bytes.fromhex(signature_string)
         try:
             public_key_obj.verify(
                 signature,
-                MESSAGE.encode(),
+                message.encode(),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
                 ),
                 hashes.SHA256()
             )
-            print('Signature OK!')
+            print('Ytansaction signature OK!')
             return True
         except InvalidSignature:
             print('[CRITICAL ERROR] Signature failed')
