@@ -55,8 +55,15 @@ class Node:
                     print('Unavailable add transaction without wallet address. Please create or restore wallet!')
                     continue
 
+                # Data for new transaction from user
                 tx_recipient, tx_amount = self.get_transaction_value()
-                if self.blockchain.add_transaction(self.wallet.address, tx_recipient, tx_amount):
+
+                # Sign transaction
+                message_for_sign = self.wallet.address + tx_recipient + str(tx_amount)
+                signature = self.wallet.sign_transaction(message_for_sign)
+
+                # Adding new Transaction
+                if self.blockchain.add_transaction(self.wallet.address, signature, tx_recipient, tx_amount):
                     print('Open transactions:', self.blockchain.get_open_transactions())
                 else:
                     print('Transaction failed!')

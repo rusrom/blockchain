@@ -6,8 +6,13 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 
+# Necessary for signing
+# from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
 
 PASSWORD = 'In_Crypto_We_Trust'
+MESSAGE = 'HELLO_w_o_rl_d'
 
 
 class Wallet:
@@ -105,10 +110,43 @@ class Wallet:
         with open('keys/public_key.pem', 'wb') as f:
             f.write(self.public_key_pem)
 
+    def sign_transaction(self, message_string):
+        signature = self.private_key.sign(
+            message_string.encode(),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        # Return the hexadecimal representation of the binary hex data.
+        return signature.hex()
+
+    @classmethod
+    def check_signature(cls, public_key_obj, signature_string):
+        # Return the binary hex data represented by the hexadecimal string.
+        signature = bytes.fromhex(signature_string)
+        try:
+            public_key_obj.verify(
+                signature,
+                MESSAGE.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            print('Signature OK!')
+            return True
+        except InvalidSignature:
+            print('[CRITICAL ERROR] Signature failed')
+            return False
+
 
 if __name__ == "__main__":
     wallet = Wallet()
     wallet.generate_keys()
 
+    # keys pem
     print(wallet.private_key_encrypted_pem)
     print(wallet.public_key_pem)

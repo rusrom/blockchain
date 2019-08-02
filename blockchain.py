@@ -56,6 +56,7 @@ class Blockchain:
                 transactions=[
                     Transaction(
                         sender=tx['sender'],
+                        signature=tx['signature'],
                         recipient=tx['recipient'],
                         amount=tx['amount']
                     )
@@ -70,6 +71,7 @@ class Blockchain:
         self.__open_transactions = [
             Transaction(
                 sender=tx['sender'],
+                signature=tx['signature'],
                 recipient=tx['recipient'],
                 amount=tx['amount']
             )
@@ -179,10 +181,11 @@ class Blockchain:
             return self.__chain[-1]
         return None
 
-    def add_transaction(self, sender, recipient, amount):
+    def add_transaction(self, sender, signature, recipient, amount):
         '''Add transaction to th open transactions list
         Arguments:
-            :sender: The sender(default=owner) of the coins
+            :sender: sender wallet address
+            :signature: signed transaction message
             :recipient: The recipient of the coins
             :amount: The amount of coins that should be sent
         '''
@@ -194,6 +197,7 @@ class Blockchain:
 
         transaction = Transaction(
             sender=sender,
+            signature=signature,
             recipient=recipient,
             amount=amount
         )
@@ -213,6 +217,7 @@ class Blockchain:
         # Reward transaction for miners
         reward_transaction = Transaction(
             sender='MINING_REWARD_BOT',
+            signature='MINING_REWARD_BOT_SIGNATURE',
             recipient=self.hosting_node_id,
             amount=MINING_REWARD
         )
