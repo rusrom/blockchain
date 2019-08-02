@@ -81,22 +81,6 @@ class Blockchain:
             for tx in json.loads(file_content[1])
         ]
 
-    @property
-    def chain_dict(self):
-        # Convert list of Block Classes to list of dicts
-        blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
-
-        # Convert block transactions from Transaction Classes to dicts
-        for block in blockchain_blocks_to_dict:
-            block['transactions'] = [tx.__dict__ for tx in block['transactions']]
-
-        return blockchain_blocks_to_dict
-
-    # def open_transactions_dict(self):
-    #     # Convert list of open transactions from Transaction Classes to dicts
-    #     open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
-    #     return open_transactions_to_dict
-
     def save_data(self):
         # Convert list of Block Classes to list of dicts
         blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
