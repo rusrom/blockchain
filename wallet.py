@@ -11,6 +11,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 
+from base64 import b64decode
+
 PASSWORD = 'In_Crypto_We_Trust'
 MESSAGE = 'HELLO_w_o_rl_d'
 
@@ -63,6 +65,12 @@ class Wallet:
             'message': 'Wallet loaded'
         }
 
+    def public_key_from_string(self, public_key_string):
+        derdata = b64decode(public_key_string)
+        key = serialization.load_der_public_key(derdata, backend=default_backend())
+        print(key)
+        return key
+
     @property
     def private_key_pem(self):
         '''Serialize privvate key in PEM format'''
@@ -101,6 +109,7 @@ class Wallet:
 
         public_key_strings = self.public_key_pem.decode().splitlines()
         public_key_string = ''.join(public_key_strings[1:-1])
+        print('>>> PUBLIC KEY >>>', public_key_string)
 
         # SHA256 from publick key string
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -156,8 +165,28 @@ class Wallet:
 
 if __name__ == "__main__":
     wallet = Wallet()
-    wallet.generate_keys()
+    # wallet.generate_keys()
+    # wallet.load_keys()
+
+    pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
+
+    publ_k = wallet.public_key_from_string(pub_key)
+    print(publ_k)
+    print(dir(publ_k))
+
+
+    # Serialize PUBLIC KEY to bytestring
+    e = publ_k.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    print(e)
+
+    print('+' * 50)
+
 
     # keys pem
-    print(wallet.private_key_encrypted_pem)
-    print(wallet.public_key_pem)
+    # print(wallet.private_key_encrypted_pem)
+    # print(wallet.public_key_pem)
+    # print(wallet.address)

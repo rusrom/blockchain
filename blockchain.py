@@ -94,17 +94,16 @@ class Blockchain:
 
         return blockchain_blocks_to_dict
 
-    # def open_transactions_dict(self):
-    #     # Convert list of open transactions from Transaction Classes to dicts
-    #     open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
-    #     return open_transactions_to_dict
-
     def block_as_dict(self, block):
         # Convert Block Object to dictionary
         block_dict = block.__dict__.copy()
         # Convert block transactions from Transaction Objects to dictionaries
         block_dict['transactions'] = [tx.__dict__.copy() for tx in block_dict['transactions']]
         return block_dict
+
+    def open_transaction_as_dict(self):
+        # Convert list of open transactions from Transaction Classes to dicts
+        return [tx.__dict__.copy() for tx in self.__open_transactions]
 
     def save_data(self):
         # Convert list of Block Classes to list of dicts
@@ -233,7 +232,7 @@ class Blockchain:
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
-            return True
+            return transaction.__dict__.copy()
         return False
 
     def mine_block(self):
