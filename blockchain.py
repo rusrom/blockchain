@@ -81,6 +81,8 @@ class Blockchain:
             for tx in json.loads(file_content[1])
         ]
 
+        return 'ok'
+
     @property
     def chain_dict(self):
         # Convert list of Block Classes to list of dicts
@@ -96,6 +98,13 @@ class Blockchain:
     #     # Convert list of open transactions from Transaction Classes to dicts
     #     open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
     #     return open_transactions_to_dict
+
+    def block_as_dict(self, block):
+        # Convert Block Object to dictionary
+        block_dict = block.__dict__.copy()
+        # Convert block transactions from Transaction Objects to dictionaries
+        block_dict['transactions'] = [tx.__dict__.copy() for tx in block_dict['transactions']]
+        return block_dict
 
     def save_data(self):
         # Convert list of Block Classes to list of dicts
@@ -228,17 +237,26 @@ class Blockchain:
         return False
 
     def mine_block(self):
+        response = {
+            'block': False,
+            'wallet': self.hosting_node_id is not None,
+            'balance': None
+        }
+
         # Check wallet address. We can't mine without wallet address. We need get mining reward
         if not self.hosting_node_id:
-            print('Can\'t mine without wallet address. Please create or restore wallet!')
-            return False
+            # print('Can\'t mine without wallet address. Please create or restore wallet!')
+            response['message'] = 'Create or restore wallet'
+            return response
 
         # Check signatures opened transactions before adding to block
         for tx in self.__open_transactions:
             message = tx.sender + tx.recipient + str(tx.amount)
             if not Wallet.check_signature(self.hosting_node_public_key, message, tx.signature):
-                print(f'Transaction to {tx.recipient} with amount: {tx.amount} has bad signature! Block not be mine')
-                return False
+                # print(f'Transaction to {tx.recipient} with amount: {tx.amount} has bad signature! Block not be mine')
+                response['message'] = f'Transaction to {tx.recipient} has bad signature'
+                response['balance'] = self.get_balance(self.hosting_node_id)
+                return response
 
         # Reward transaction for miners
         reward_transaction = Transaction(
@@ -270,3 +288,8 @@ class Blockchain:
 
         # Dump blockchain and open transactions to file
         self.save_data()
+
+        response['block'] = self.block_as_dict(block)
+        response['message'] = f'Block successfuly added to blockchain'
+        response['balance'] = self.get_balance(self.hosting_node_id)
+        return response

@@ -33,8 +33,14 @@ class Wallet:
         # Generate PUBLIC KEY as RSAPublicKey Object
         self.public_key = self.private_key.public_key()
 
+        return {
+            'address': self.address,
+            'message': 'New wallet created'
+        }
+
     def load_keys(self):
         '''Load public and private keys from file in PEM format'''
+        # TODO: Add try/except for files with keys not found
         # Load encrypted private key
         with open("keys/private_key_encrypted.pem", "rb") as private_encypted_file:
             private_key = serialization.load_pem_private_key(
@@ -51,6 +57,11 @@ class Wallet:
                 backend=default_backend()
             )
         self.public_key = public_key
+
+        return {
+            'address': self.address,
+            'message': 'Wallet loaded'
+        }
 
     @property
     def private_key_pem(self):
