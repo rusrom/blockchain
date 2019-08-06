@@ -31,8 +31,8 @@ class Blockchain:
             nonce=0
         )
         self.__chain = [self.genesis_block]
-        self.load_data()
         self.__peer_nodes = set()
+        self.load_data()
         self.difficulty = DIFFICULTY
 
     def get_chain(self):
@@ -82,7 +82,7 @@ class Blockchain:
             for tx in json.loads(file_content[1])
         ]
 
-        self.__peer_nodes = set(json.loads(file_content[2]))
+        self.load_peer_nodes()
 
         return 'ok'
 
@@ -123,7 +123,6 @@ class Blockchain:
         with open('blockchain.txt', 'w') as f:
             f.write(json.dumps(blockchain_blocks_to_dict) + '\n')
             f.write(json.dumps(open_transactions_to_dict) + '\n')
-            f.write(json.dumps(list(self.__peer_nodes)) + '\n')
 
     def load_data_pickle(self):
         try:
@@ -297,16 +296,37 @@ class Blockchain:
         response['balance'] = self.get_balance(self.hosting_node_id)
         return response
 
+    def save_peer_nodes(self):
+        peer_nodes_list = list(self.__peer_nodes)
+        peer_nodes_string = json.dumps(peer_nodes_list)
+        with open('dump/peer-nodes.txt', 'w') as f:
+            f.write(peer_nodes_string)
+
+    def load_peer_nodes(self):
+        try:
+            with open('dump/peer-nodes.txt') as f:
+                peer_nodes_string = f.read()
+        except FileNotFoundError:
+            print('No dump file with nodes')
+            return False
+        peers_list = json.loads(peer_nodes_string)
+        self.__peer_nodes = set(peers_list)
+
     def add_peer_node(self, node):
         '''Add a new node to the peer node set
         Arguments:
             :node: The node URL which should be added'''
         self.__peer_nodes.add(node)
-        self.save_data()
+        self.save_peer_nodes()
 
     def remove_peer_node(self, node):
         '''Remove node from the peer node set
         Arguments:
             :node: The node URL which should be removed'''
         self.__peer_nodes.discard(node)
-        self.save_data()
+        self.save_peer_nodes()
+
+    @property
+    def nodes(self):
+        '''Return a list of all connected nodes'''
+        return list(self.__peer_nodes)

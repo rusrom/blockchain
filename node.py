@@ -119,5 +119,48 @@ def mine():
     return jsonify(response), status_code
 
 
+@app.route('/nodes', methods=['GET'])
+def get_nodes():
+    response = {
+        'all_nodes': blockchain.nodes
+    }
+    return jsonify(response), 200
+
+
+@app.route('/node', methods=['POST'])
+def add_node():
+    status_code = 400
+    response = {
+        'all_nodes': None,
+    }
+    values = request.get_json()
+    if values and 'node' in values:
+        node = values['node']
+        blockchain.add_peer_node(node)
+
+        status_code = 200
+        response['message'] = 'Node was added'
+        response['all_nodes'] = blockchain.nodes
+    else:
+        response['message'] = 'No data with node attached'
+
+    return jsonify(response), status_code
+
+
+@app.route('/node/<node_url>', methods=['DELETE'])
+def remove_node(node_url):
+    status_code = 400
+    response = {
+        'message': 'No such node found',
+        'all_nodes': blockchain.nodes
+    }
+    if node_url:
+        blockchain.remove_peer_node(node_url)
+        status_code = 200
+        response['message'] = f'Node {node_url} removed from list of nodes'
+        response['all_nodes'] = blockchain.nodes
+
+    return jsonify(response), status_code
+
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=5000)
