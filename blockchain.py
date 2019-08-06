@@ -20,9 +20,10 @@ DIFFICULTY = '0' * 2
 
 
 class Blockchain:
-    def __init__(self):
+    def __init__(self, hosting_node_port):
         self.hosting_node_id = None
         self.hosting_node_public_key = None
+        self.hosting_node_port = hosting_node_port
         self.__open_transactions = []
         self.genesis_block = Block(
             index=0,
@@ -43,7 +44,7 @@ class Blockchain:
 
     def load_data(self):
         try:
-            with open('blockchain.txt') as f:
+            with open(f'dump/{self.hosting_node_port}-blockchain.txt') as f:
                 file_content = f.readlines()
         except FileNotFoundError:
             print('Genesis block innit...')
@@ -120,13 +121,13 @@ class Blockchain:
         # Convert list of open transactions from Transaction Classes to dicts
         open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
 
-        with open('blockchain.txt', 'w') as f:
+        with open(f'dump/{self.hosting_node_port}-blockchain.txt', 'w') as f:
             f.write(json.dumps(blockchain_blocks_to_dict) + '\n')
             f.write(json.dumps(open_transactions_to_dict) + '\n')
 
     def load_data_pickle(self):
         try:
-            with open('blockchain.p', 'rb') as f:
+            with open(f'dump/{self.hosting_node_port}-blockchain.p', 'rb') as f:
                 file_content = pickle.loads(f.read())
             self.__chain = file_content['blockchain']
             self.__open_transactions = file_content['open_transactions']
@@ -138,7 +139,7 @@ class Blockchain:
             'blockchain': self.__chain,
             'open_transactions': self.__open_transactions
         }
-        with open('blockchain.p', 'wb') as f:
+        with open(f'dump/{self.hosting_node_port}-blockchain.p', 'wb') as f:
             f.write(pickle.dumps(save_data))
 
     def proof_of_work(self):
@@ -299,12 +300,12 @@ class Blockchain:
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)
         peer_nodes_string = json.dumps(peer_nodes_list)
-        with open('dump/peer-nodes.txt', 'w') as f:
+        with open(f'dump/{self.hosting_node_port}-peer-nodes.txt', 'w') as f:
             f.write(peer_nodes_string)
 
     def load_peer_nodes(self):
         try:
-            with open('dump/peer-nodes.txt') as f:
+            with open(f'dump/{self.hosting_node_port}-peer-nodes.txt') as f:
                 peer_nodes_string = f.read()
         except FileNotFoundError:
             print('No dump file with nodes')

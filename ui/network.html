@@ -88,9 +88,11 @@
                         .then(response => {
                             this.success = response.data.message;
                             this.nodes = response.data.all_nodes;
+                            this.error = null;
                         })
                         .catch(error => {
                             this.error = error.response.data.message;
+                            this.success = null;
                         })
                 },
                 onLoadNodes: function() {
@@ -98,10 +100,12 @@
                     axios.get('/nodes')
                         .then(response => {
                             this.success = response.data.message;
+                            this.error = null;
                             this.nodes = response.data.all_nodes;
                         })
                         .catch(error => {
                             this.error = error.response.data.message;
+                            this.success = null;
                         })
                 },
                 onRemoveNode: function(node) {
@@ -109,10 +113,12 @@
                     axios.delete(`/node/${node}`)
                     .then(response => {
                             this.success = response.data.message;
+                            this.error = null;
                             this.nodes = response.data.all_nodes;
                         })
                         .catch(error => {
                             this.error = error.response.data.message;
+                            this.success = null;
                         })
                 }
             }

@@ -18,9 +18,10 @@ MESSAGE = 'HELLO_w_o_rl_d'
 
 
 class Wallet:
-    def __init__(self):
+    def __init__(self, hosting_node_port):
         self.private_key = None
         self.public_key = None
+        self.hosting_node_port = hosting_node_port
 
     def generate_keys(self):
         '''Generate Private and Public keys'''
@@ -44,7 +45,7 @@ class Wallet:
         '''Load public and private keys from file in PEM format'''
         # TODO: Add try/except for files with keys not found
         # Load encrypted private key
-        with open("keys/private_key_encrypted.pem", "rb") as private_encypted_file:
+        with open(f'keys/{self.hosting_node_port}-private_key_encrypted.pem', 'rb') as private_encypted_file:
             private_key = serialization.load_pem_private_key(
                 private_encypted_file.read(),
                 password=PASSWORD.encode(),
@@ -53,7 +54,7 @@ class Wallet:
         self.private_key = private_key
 
         # Load public key
-        with open("keys/public_key.pem", "rb") as key_file:
+        with open(f'keys/{self.hosting_node_port}-public_key.pem', 'rb') as key_file:
             public_key = serialization.load_pem_public_key(
                 key_file.read(),
                 backend=default_backend()
@@ -119,15 +120,15 @@ class Wallet:
 
     def save_keys(self):
         # Save serialized private key to .pem file
-        with open('keys/private_key.pem', 'wb') as f:
+        with open(f'keys/{self.hosting_node_port}-private_key.pem', 'wb') as f:
             f.write(self.private_key_pem)
 
         # Save serialized encrypted private key to .pem file
-        with open('keys/private_key_encrypted.pem', 'wb') as f:
+        with open(f'keys/{self.hosting_node_port}-private_key_encrypted.pem', 'wb') as f:
             f.write(self.private_key_encrypted_pem)
 
         # Save serialized public key to .pem file
-        with open('keys/public_key.pem', 'wb') as f:
+        with open(f'keys/{self.hosting_node_port}-public_key.pem', 'wb') as f:
             f.write(self.public_key_pem)
 
     def sign_transaction(self, message_string):
@@ -163,19 +164,19 @@ class Wallet:
             return False
 
 
-if __name__ == "__main__":
-    wallet = Wallet()
+# if __name__ == "__main__":
+#     wallet = Wallet()
 
-    pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
+#     pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
 
-    publ_k = wallet.public_key_from_string(pub_key)
-    print(publ_k)
-    print(dir(publ_k))
+#     publ_k = wallet.public_key_from_string(pub_key)
+#     print(publ_k)
+#     print(dir(publ_k))
 
-    # Serialize PUBLIC KEY to bytestring
-    e = publ_k.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+#     # Serialize PUBLIC KEY to bytestring
+#     e = publ_k.public_bytes(
+#         encoding=serialization.Encoding.PEM,
+#         format=serialization.PublicFormat.SubjectPublicKeyInfo
+#     )
 
-    print(e)
+#     print(e)

@@ -8,8 +8,8 @@ from wallet import Wallet
 app = Flask(__name__)
 CORS(app)
 
-blockchain = Blockchain()
-wallet = Wallet()
+# blockchain = Blockchain()
+# wallet = Wallet()
 
 
 @app.route('/', methods=['GET'])
@@ -174,4 +174,14 @@ def remove_node(node_url):
     return jsonify(response), status_code
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000)
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--port', type=int, default=5000)
+    args = parser.parse_args()
+    port = args.port
+
+    blockchain = Blockchain(port)
+    wallet = Wallet(port)
+
+    app.run(host='127.0.0.1', port=port)
