@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 from blockchain import Blockchain
@@ -14,7 +14,7 @@ wallet = Wallet()
 
 @app.route('/', methods=['GET'])
 def ui():
-    return 'It Works!'
+    return send_from_directory('ui', 'node.html')
 
 
 @app.route('/wallet', methods=['POST'])
@@ -45,21 +45,25 @@ def get_balance():
     if response['wallet']:
         response['message'] = f'Balance for {wallet.address}'
         response['balance'] = blockchain.get_balance(wallet.address)
+        status_code = 200
     else:
         response['message'] = 'Create or restore wallet'
         response['balance'] = None
-    return jsonify(response), 200
+        status_code = 501
+
+    return jsonify(response), status_code
 
 
 @app.route('/transaction', methods=['POST'])
 def add_transaction():
+    status_code = 501
     response = {
         'transaction': False,
     }
 
     if not wallet.public_key:
         response['message'] = 'Create or restore wallet'
-        return jsonify(response), 200
+        return jsonify(response), status_code
 
     response['balance'] = blockchain.get_balance(wallet.address)
 
@@ -80,6 +84,7 @@ def add_transaction():
                 response['message'] = 'Successfuly added transaction'
                 response['transaction'] = transaction
                 response['balance'] = blockchain.get_balance(wallet.address)
+                status_code = 200
             else:
                 response['message'] = 'Creating transaction faild'
                 response['balance'] = blockchain.get_balance(wallet.address)
@@ -88,12 +93,14 @@ def add_transaction():
     else:
         response['message'] = 'No data found inside incoming request'
 
-    return jsonify(response), 200
+    # if response['transaction']:
+    #     return jsonify(response), 200
+    return jsonify(response), status_code
 
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
-    return jsonify(blockchain.chain_dict)
+    return jsonify(blockchain.chain_dict), 200
 
 
 @app.route('/transactions', methods=['GET'])
@@ -104,8 +111,12 @@ def get_open_transactions():
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    status_code = 501
     response = blockchain.mine_block()
-    return jsonify(response), 200
+    if response['block']:
+        # return jsonify(response), 200
+        status_code = 200
+    return jsonify(response), status_code
 
 
 if __name__ == "__main__":

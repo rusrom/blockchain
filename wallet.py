@@ -73,7 +73,7 @@ class Wallet:
 
     @property
     def private_key_pem(self):
-        '''Serialize privvate key in PEM format'''
+        '''Serialize private key in PEM format'''
 
         # Serialize PRIVATE KEY to bytestring
         return self.private_key.private_bytes(
@@ -105,11 +105,11 @@ class Wallet:
 
     @property
     def address(self):
-        '''Clien wallet address in Blockchain'''
+        '''Client wallet address in Blockchain'''
 
         public_key_strings = self.public_key_pem.decode().splitlines()
         public_key_string = ''.join(public_key_strings[1:-1])
-        print('>>> PUBLIC KEY >>>', public_key_string)
+        # print('>>> PUBLIC KEY >>>', public_key_string)
 
         # SHA256 from publick key string
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -156,7 +156,7 @@ class Wallet:
                 ),
                 hashes.SHA256()
             )
-            print('Ytansaction signature OK!')
+            print('Tansaction signature OK!')
             return True
         except InvalidSignature:
             print('[CRITICAL ERROR] Signature failed')
@@ -165,15 +165,12 @@ class Wallet:
 
 if __name__ == "__main__":
     wallet = Wallet()
-    # wallet.generate_keys()
-    # wallet.load_keys()
 
     pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
 
     publ_k = wallet.public_key_from_string(pub_key)
     print(publ_k)
     print(dir(publ_k))
-
 
     # Serialize PUBLIC KEY to bytestring
     e = publ_k.public_bytes(
@@ -182,11 +179,3 @@ if __name__ == "__main__":
     )
 
     print(e)
-
-    print('+' * 50)
-
-
-    # keys pem
-    # print(wallet.private_key_encrypted_pem)
-    # print(wallet.public_key_pem)
-    # print(wallet.address)
