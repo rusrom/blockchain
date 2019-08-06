@@ -32,6 +32,7 @@ class Blockchain:
         )
         self.__chain = [self.genesis_block]
         self.load_data()
+        self.__peer_nodes = set()
         self.difficulty = DIFFICULTY
 
     def get_chain(self):
@@ -81,6 +82,8 @@ class Blockchain:
             for tx in json.loads(file_content[1])
         ]
 
+        self.__peer_nodes = set(json.loads(file_content[2]))
+
         return 'ok'
 
     @property
@@ -119,7 +122,8 @@ class Blockchain:
 
         with open('blockchain.txt', 'w') as f:
             f.write(json.dumps(blockchain_blocks_to_dict) + '\n')
-            f.write(json.dumps(open_transactions_to_dict))
+            f.write(json.dumps(open_transactions_to_dict) + '\n')
+            f.write(json.dumps(list(self.__peer_nodes)) + '\n')
 
     def load_data_pickle(self):
         try:
@@ -292,3 +296,17 @@ class Blockchain:
         response['message'] = f'Block successfuly added to blockchain'
         response['balance'] = self.get_balance(self.hosting_node_id)
         return response
+
+    def add_peer_node(self, node):
+        '''Add a new node to the peer node set
+        Arguments:
+            :node: The node URL which should be added'''
+        self.__peer_nodes.add(node)
+        self.save_data()
+
+    def remove_peer_node(self, node):
+        '''Remove node from the peer node set
+        Arguments:
+            :node: The node URL which should be removed'''
+        self.__peer_nodes.discard(node)
+        self.save_data()
