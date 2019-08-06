@@ -13,8 +13,13 @@ wallet = Wallet()
 
 
 @app.route('/', methods=['GET'])
-def ui():
+def get_node_ui():
     return send_from_directory('ui', 'node.html')
+
+
+@app.route('/network', methods=['GET'])
+def get_network_ui():
+    return send_from_directory('ui', 'network.html')
 
 
 @app.route('/wallet', methods=['POST'])
@@ -121,15 +126,21 @@ def mine():
 
 @app.route('/nodes', methods=['GET'])
 def get_nodes():
+    code_response = 200
     response = {
         'all_nodes': blockchain.nodes
     }
-    return jsonify(response), 200
+    if response['all_nodes']:
+        response['message'] = f'You added {len(response["all_nodes"])} node(s)'
+    else:
+        code_response = 501
+        response['message'] = 'You did\'t add any node yet'
+    return jsonify(response), code_response
 
 
 @app.route('/node', methods=['POST'])
 def add_node():
-    status_code = 400
+    status_code = 501
     response = {
         'all_nodes': None,
     }

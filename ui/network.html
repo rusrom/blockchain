@@ -42,7 +42,7 @@
                     <form @submit.prevent="onAddNode">
                         <div class="form-group">
                             <label for="node-url">Node URL</label>
-                            <input v-model="newNodeUrl" type="text" class="form-control" id="node-url" placeholder="http://localhost:5001">
+                            <input v-model="newNodeUrl" type="text" class="form-control" id="node-url" placeholder="localhost:5001">
                         </div>
                         <button :disabled="newNodeUrl.trim() === ''" type="submit" class="btn btn-primary">Add</button>
                     </form>
@@ -76,21 +76,44 @@
         new Vue({
             el: '#app',
             data: {
-                nodes: [
-                    'localhost:5001',
-                    'localhost:5002',
-                ],
-                newNodeUrl: ''
+                nodes: [],
+                newNodeUrl: '',
+                success: null,
+                error: null
             },
             methods: {
                 onAddNode: function() {
                     // Add node as peer node to local node server
+                    axios.post('/node', {node: this.newNodeUrl})
+                        .then(response => {
+                            this.success = response.data.message;
+                            this.nodes = response.data.all_nodes;
+                        })
+                        .catch(error => {
+                            this.error = error.response.data.message;
+                        })
                 },
                 onLoadNodes: function() {
                     // Load all peer nodes of the local node server
+                    axios.get('/nodes')
+                        .then(response => {
+                            this.success = response.data.message;
+                            this.nodes = response.data.all_nodes;
+                        })
+                        .catch(error => {
+                            this.error = error.response.data.message;
+                        })
                 },
-                onRemoveNode: function() {
+                onRemoveNode: function(node) {
                     // Remove node as a peer node
+                    axios.delete(`/node/${node}`)
+                    .then(response => {
+                            this.success = response.data.message;
+                            this.nodes = response.data.all_nodes;
+                        })
+                        .catch(error => {
+                            this.error = error.response.data.message;
+                        })
                 }
             }
         })
