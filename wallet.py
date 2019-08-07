@@ -45,7 +45,7 @@ class Wallet:
         '''Load public and private keys from file in PEM format'''
         # TODO: Add try/except for files with keys not found
         # Load encrypted private key
-        with open(f'keys/{self.hosting_node_port}-private_key_encrypted.pem', 'rb') as private_encypted_file:
+        with open(f'data/keys/{self.hosting_node_port}-private_key_encrypted.pem', 'rb') as private_encypted_file:
             private_key = serialization.load_pem_private_key(
                 private_encypted_file.read(),
                 password=PASSWORD.encode(),
@@ -54,7 +54,7 @@ class Wallet:
         self.private_key = private_key
 
         # Load public key
-        with open(f'keys/{self.hosting_node_port}-public_key.pem', 'rb') as key_file:
+        with open(f'data/keys/{self.hosting_node_port}-public_key.pem', 'rb') as key_file:
             public_key = serialization.load_pem_public_key(
                 key_file.read(),
                 backend=default_backend()
@@ -120,15 +120,15 @@ class Wallet:
 
     def save_keys(self):
         # Save serialized private key to .pem file
-        with open(f'keys/{self.hosting_node_port}-private_key.pem', 'wb') as f:
+        with open(f'data/keys/{self.hosting_node_port}-private_key.pem', 'wb') as f:
             f.write(self.private_key_pem)
 
         # Save serialized encrypted private key to .pem file
-        with open(f'keys/{self.hosting_node_port}-private_key_encrypted.pem', 'wb') as f:
+        with open(f'data/keys/{self.hosting_node_port}-private_key_encrypted.pem', 'wb') as f:
             f.write(self.private_key_encrypted_pem)
 
         # Save serialized public key to .pem file
-        with open(f'keys/{self.hosting_node_port}-public_key.pem', 'wb') as f:
+        with open(f'data/keys/{self.hosting_node_port}-public_key.pem', 'wb') as f:
             f.write(self.public_key_pem)
 
     def sign_transaction(self, message_string):
