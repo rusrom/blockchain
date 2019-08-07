@@ -141,7 +141,7 @@ def get_chain():
 
 @app.route('/transactions', methods=['GET'])
 def get_open_transactions():
-    open_transactions = blockchain.open_transaction_as_dict()
+    open_transactions = blockchain.open_transactions_as_dict()
     return jsonify(open_transactions), 200
 
 

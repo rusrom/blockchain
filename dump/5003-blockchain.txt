@@ -1,2 +1,0 @@
-[{"index": 0, "previous_hash": "Genesis_Block", "transactions": [], "nonce": 0, "timestamp": 1565114867.5371447}, {"index": 1, "previous_hash": "e3c9c654a7dfcaf2c70fd89e44a6f5b8a420d72a3c09a57affe63b20223b2ea1", "transactions": [{"sender": "MINING_REWARD_BOT", "signature": "MINING_REWARD_BOT_SIGNATURE", "recipient": "10cf63964cae7272666588eff227f8c4e0d4e084f14645088f0eab785530a089", "amount": 10}], "nonce": 452, "timestamp": 1565114867.5371447}]
-[]

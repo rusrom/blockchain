@@ -43,18 +43,20 @@ class Blockchain:
     def get_open_transactions(self):
         return self.__open_transactions[:]
 
-    def load_data(self):
+    def load_blockchain(self):
+        # Read data from dump file
         try:
-            with open(f'dump/{self.hosting_node_port}-blockchain.txt') as f:
-                file_content = f.readlines()
+            with open(f'data/blockchain/{self.hosting_node_port}-blockchain.txt') as f:
+                file_content = f.read()
         except FileNotFoundError:
             print('Genesis block innit...')
             return
 
-        # Read data from dump file and convert them to right format
+        # Convert file content to right format
         corrected_blockchain_dump = []
-        # Iterate through all blocks(dict) in list and transform them from dict to Block Class
-        for block_dump in json.loads(file_content[0]):
+
+        # Iterate through all blocks(dict) in list and transform them from dict to Block Objects
+        for block_dump in json.loads(file_content):
             block = Block(
                 index=block_dump['index'],
                 previous_hash=block_dump['previous_hash'],
@@ -74,6 +76,14 @@ class Blockchain:
             corrected_blockchain_dump.append(block)
         self.__chain = corrected_blockchain_dump[:]
 
+    def load_transactions(self):
+        try:
+            with open(f'data/transactions/{self.hosting_node_port}-open-transactions.txt') as f:
+                file_content = f.read()
+        except FileNotFoundError:
+            print('Genesis block innit...')
+            return
+
         self.__open_transactions = [
             Transaction(
                 sender=tx['sender'],
@@ -81,11 +91,13 @@ class Blockchain:
                 recipient=tx['recipient'],
                 amount=tx['amount']
             )
-            for tx in json.loads(file_content[1])
+            for tx in json.loads(file_content)
         ]
 
+    def load_data(self):
+        self.load_blockchain()
+        self.load_transactions()
         self.load_peer_nodes()
-
         return 'ok'
 
     @property
@@ -106,42 +118,43 @@ class Blockchain:
         block_dict['transactions'] = [tx.__dict__.copy() for tx in block_dict['transactions']]
         return block_dict
 
-    def open_transaction_as_dict(self):
+    def open_transactions_as_dict(self):
         # Convert list of open transactions from Transaction Classes to dicts
         return [tx.__dict__.copy() for tx in self.__open_transactions]
 
-    def save_data(self):
+    def save_blockchain(self):
         # Convert list of Block Classes to list of dicts
         blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
 
-        # Convert block transactions from Transaction Classes to dicts
+        # Convert block transactions from Transaction Objects to dicts
         for block in blockchain_blocks_to_dict:
-            transactions_to_dict = [tx.to_ordered_dict() for tx in block['transactions']]
-            block['transactions'] = transactions_to_dict
+            block['transactions'] = [tx.to_ordered_dict() for tx in block['transactions']]
 
-        # Convert list of open transactions from Transaction Classes to dicts
+        with open(f'data/blockchain/{self.hosting_node_port}-blockchain.txt', 'w') as f:
+            f.write(json.dumps(blockchain_blocks_to_dict))
+
+    def save_open_transactions(self):
+        # Convert open transactions list of Transaction Objects to list of dicts
         open_transactions_to_dict = [tx.__dict__.copy() for tx in self.__open_transactions]
+        with open(f'data/transactions/{self.hosting_node_port}-open-transactions.txt', 'w') as f:
+            f.write(json.dumps(open_transactions_to_dict))
 
-        with open(f'dump/{self.hosting_node_port}-blockchain.txt', 'w') as f:
-            f.write(json.dumps(blockchain_blocks_to_dict) + '\n')
-            f.write(json.dumps(open_transactions_to_dict) + '\n')
+    # def load_data_pickle(self):
+    #     try:
+    #         with open(f'dump/{self.hosting_node_port}-blockchain.p', 'rb') as f:
+    #             file_content = pickle.loads(f.read())
+    #         self.__chain = file_content['blockchain']
+    #         self.__open_transactions = file_content['open_transactions']
+    #     except FileNotFoundError:
+    #         print('Genesis block innit...')
 
-    def load_data_pickle(self):
-        try:
-            with open(f'dump/{self.hosting_node_port}-blockchain.p', 'rb') as f:
-                file_content = pickle.loads(f.read())
-            self.__chain = file_content['blockchain']
-            self.__open_transactions = file_content['open_transactions']
-        except FileNotFoundError:
-            print('Genesis block innit...')
-
-    def save_data_pickle(self):
-        save_data = {
-            'blockchain': self.__chain,
-            'open_transactions': self.__open_transactions
-        }
-        with open(f'dump/{self.hosting_node_port}-blockchain.p', 'wb') as f:
-            f.write(pickle.dumps(save_data))
+    # def save_data_pickle(self):
+    #     save_data = {
+    #         'blockchain': self.__chain,
+    #         'open_transactions': self.__open_transactions
+    #     }
+    #     with open(f'dump/{self.hosting_node_port}-blockchain.p', 'wb') as f:
+    #         f.write(pickle.dumps(save_data))
 
     def proof_of_work(self):
         '''Struggle with DIFFICULTY seeking correct proof'''
@@ -236,7 +249,9 @@ class Blockchain:
 
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
-            self.save_data()
+
+            # Save open transactions to file
+            self.save_open_transactions()
 
             transaction_as_dict = transaction.__dict__.copy()
 
@@ -307,8 +322,8 @@ class Blockchain:
         # Clear open transactions
         self.__open_transactions.clear()
 
-        # Dump blockchain and open transactions to file
-        self.save_data()
+        # Save blockchain to file
+        self.save_blockchain()
 
         response['block'] = self.block_as_dict(block)
         response['message'] = f'Block successfuly added to blockchain'
