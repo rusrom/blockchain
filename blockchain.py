@@ -1,5 +1,6 @@
 import json
 import pickle
+import requests
 # from hashlib import sha256
 
 # from hash_util import hash_block
@@ -236,7 +237,24 @@ class Blockchain:
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
-            return transaction.__dict__.copy()
+
+            transaction_as_dict = transaction.__dict__.copy()
+
+            # # Broadcast transaction to other nodes
+            # for node in self.__peer_nodes:
+            #     node_url = f'http://{node}/broadcast-transaction'
+            #     try:
+            #         response = requests.post(node_url, json=json.dumps(transaction_as_dict))
+            #         if response.ok:
+            #             pass
+            #         else:
+            #             print(f'{node}: Transaction declined, needs resolving')
+            #             continue
+            #     except requests.exceptions.ConnectionError:
+            #         print(f'{node}: Connection error')
+            #         continue
+
+            return transaction_as_dict
         return False
 
     def mine_block(self):

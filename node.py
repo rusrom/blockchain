@@ -59,6 +59,37 @@ def get_balance():
     return jsonify(response), status_code
 
 
+@app.route('/broadcast-transaction', methods=['POST'])
+def broadcast_transaction():
+    status_code = 400
+    response = {
+        'message': 'No data found in request',
+        'transaction': False
+    }
+    transaction = request.get_json()
+    if transaction:
+        required_fields = ['sender', 'signature', 'recipient', 'amount']
+
+        if all([field in required_fields for field in transaction]):
+            result = blockchain.add_transaction(
+                sender=transaction['sender'],
+                signature=transaction['signature'],
+                recipient=transaction['recipient'],
+                amount=transaction['amount']
+            )
+            if result:
+                response['message'] = 'Successfuly added transaction'
+                response['transaction'] = transaction
+                status_code = 200
+            else:
+                response['message'] = f'Transaction was not accepted by {blockchain.hosting_node_port}'
+                status_code = 500
+        else:
+            response['message'] = 'Missing required field(s)'
+
+    return jsonify(response), status_code
+
+
 @app.route('/transaction', methods=['POST'])
 def add_transaction():
     status_code = 501
