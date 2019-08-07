@@ -333,12 +333,12 @@ class Blockchain:
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)
         peer_nodes_string = json.dumps(peer_nodes_list)
-        with open(f'dump/{self.hosting_node_port}-peer-nodes.txt', 'w') as f:
+        with open(f'data/broadcast/{self.hosting_node_port}-peer-nodes.txt', 'w') as f:
             f.write(peer_nodes_string)
 
     def load_peer_nodes(self):
         try:
-            with open(f'dump/{self.hosting_node_port}-peer-nodes.txt') as f:
+            with open(f'data/broadcast/{self.hosting_node_port}-peer-nodes.txt') as f:
                 peer_nodes_string = f.read()
         except FileNotFoundError:
             print('No dump file with nodes')
