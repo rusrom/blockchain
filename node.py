@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -66,17 +68,18 @@ def broadcast_transaction():
         'message': 'No data found in request',
         'transaction': False
     }
-    transaction = request.get_json()
+
+    transaction = json.loads(request.json)
     if transaction:
         required_fields = ['sender', 'public_key', 'signature', 'recipient', 'amount']
-
         if all([field in required_fields for field in transaction]):
             result = blockchain.add_transaction(
                 sender=transaction['sender'],
                 public_key=transaction['public_key'],
                 signature=transaction['signature'],
                 recipient=transaction['recipient'],
-                amount=transaction['amount']
+                amount=transaction['amount'],
+                broadcast=False
             )
             if result:
                 response['message'] = 'Successfuly added transaction'
