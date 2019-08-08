@@ -68,11 +68,12 @@ def broadcast_transaction():
     }
     transaction = request.get_json()
     if transaction:
-        required_fields = ['sender', 'signature', 'recipient', 'amount']
+        required_fields = ['sender', 'public_key', 'signature', 'recipient', 'amount']
 
         if all([field in required_fields for field in transaction]):
             result = blockchain.add_transaction(
                 sender=transaction['sender'],
+                public_key=transaction['public_key'],
                 signature=transaction['signature'],
                 recipient=transaction['recipient'],
                 amount=transaction['amount']
@@ -115,7 +116,7 @@ def add_transaction():
             signature = wallet.sign_transaction(message)
 
             # Add transaction
-            transaction = blockchain.add_transaction(wallet.address, signature, recipient, amount)
+            transaction = blockchain.add_transaction(wallet.address, wallet.public_key_to_string(), signature, recipient, amount)
             if transaction:
                 response['message'] = 'Successfuly added transaction'
                 response['transaction'] = transaction

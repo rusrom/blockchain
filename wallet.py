@@ -66,11 +66,17 @@ class Wallet:
             'message': 'Wallet loaded'
         }
 
+    def public_key_to_string(self):
+        '''Return public key string from RSAPublicKey Object'''
+        public_key_strings = self.public_key_pem.decode().splitlines()
+        public_key_string = ''.join(public_key_strings[1:-1])
+        return public_key_string
+
     def public_key_from_string(self, public_key_string):
-        derdata = b64decode(public_key_string)
-        key = serialization.load_der_public_key(derdata, backend=default_backend())
-        print(key)
-        return key
+        '''Return RSAPublicKey Object from public key string'''
+        der_data = b64decode(public_key_string)
+        public_key_obj = serialization.load_der_public_key(der_data, backend=default_backend())
+        return public_key_obj
 
     @property
     def private_key_pem(self):
@@ -110,7 +116,6 @@ class Wallet:
 
         public_key_strings = self.public_key_pem.decode().splitlines()
         public_key_string = ''.join(public_key_strings[1:-1])
-        # print('>>> PUBLIC KEY >>>', public_key_string)
 
         # SHA256 from publick key string
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -144,13 +149,21 @@ class Wallet:
         return signature.hex()
 
     @classmethod
-    def check_signature(cls, public_key_obj, message, signature_string):
+    def check_signature(cls, public_key_string, message_string, signature_string):
+        # Get byte string from message string
+        message = message_string.encode()
+
         # Return the binary hex data represented by the hexadecimal string.
         signature = bytes.fromhex(signature_string)
+
+        # Return RSAPublicKey object from public key string
+        der_data = b64decode(public_key_string)
+        public_key_obj = serialization.load_der_public_key(der_data, backend=default_backend())
+
         try:
             public_key_obj.verify(
                 signature,
-                message.encode(),
+                message,
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
                     salt_length=padding.PSS.MAX_LENGTH
@@ -165,18 +178,46 @@ class Wallet:
 
 
 # if __name__ == "__main__":
-#     wallet = Wallet()
+#     transaction_signature = 'ae3a92dfb6ce1a5769d1ee66a7b363fd0506d35577a9a5ef40dae0339be302ce14787c8f4cd4d34087f0c1c13c0a28839aae4e06b6e5ac02a5a1c6a28afa4a1d1fc7971c91fdfb0bf731b5faee2f0bf28869341a143f45dc26ec9ad3160d921ee46b88dac1344dbb438714b47962728ce286da8ea1db79f25047d251eb0a1da95e31382de2993a4ebbb15fc041b60d7f8e9a3a5cb590905dc18e5290318e42ba3294b1cea7bb5761cf1eb2c5ffd7b4e1dad6a1b6a1748fef5a73be7e7947b8318f0c808a804e58d39f67b498a31dd38a6b55a5877bbd2cd0275a9f85ce2539334012aebfef5cd6a3576b391219364b72a4f965f7404f73fa134dc2ced0efaa8a'
 
-#     pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
+#     wallet = Wallet(5000)
+#     wallet.load_keys()
+#     # print(wallet.public_key)
+#     # print(wallet.address)
+#     # print(wallet.public_key_pem)
+#     # print(wallet.public_key_pem.decode())
 
-#     publ_k = wallet.public_key_from_string(pub_key)
-#     print(publ_k)
-#     print(dir(publ_k))
+#     # print('Public key string')
+#     # pub_key_str = wallet.public_key_to_string()
+#     # print(pub_key_str)
+#     pub_key_str_copy = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3CPXhKOGh6UXbcMD4tJceGVAeNZkdCvwn8ZhVol9+S5zkaEFXxu1nMQQqoHisKhdGowFMqwBbTU7a1yibSEeaiRpSAtLrf9ggedAZHq7UbohaRXaLaqF2xub4WogJMDjts+y+NbgyE31JbNlF0AXjuBc2cQzjeEI8PvbpfE3SGH68jZcKNl9xr0LgIEp0XExtTqBA/NUL1IFfTH7RWr/SZJfMwaB+YL4rDHG0RMQBg6mDwY0Z6NSkdyfxwwEmINJv6oeesAFeomhgsk0iUzbIrqtYwT3zskU+S6hCX65jp/JoxaNXfgn3r7C7wOsExqxq/Bm2nrldDfQ/E9U+mm6OQIDAQAB'
 
-#     # Serialize PUBLIC KEY to bytestring
-#     e = publ_k.public_bytes(
-#         encoding=serialization.Encoding.PEM,
-#         format=serialization.PublicFormat.SubjectPublicKeyInfo
-#     )
+#     # print('\nFrom string to public object')
+#     # pub_key_obj = wallet.public_key_from_string(pub_key_str_copy)
+#     # print('Result')
+#     # print(pub_key_obj)
 
-#     print(e)
+
+
+#     # print('\nSigature\n')
+#     message_string = 'Some text to sign with private key'
+#     # signature_string = wallet.sign_transaction(message_string)
+#     # print(signature_string)
+#     print('\nCheck signature\n')
+#     res = Wallet.check_signature(pub_key_str_copy, message_string, transaction_signature)
+#     print(res)
+
+
+# #     pub_key = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApLqG4Yf8OLwWO7gqrkHBEAH5InilRFN8QmZcECIE4jBpHKQDfCG0HUkLieFdPiHTq4ksNa6mAtuyY29La3GpkCXGOfBRtQWA7GqU2GbZIqIVxjE3BVE94kDjbifKv87IpRbrKVIJPf7C8n+MTWHfwllU3njPB8bUwEWzlERMlSn2S6JYZh5kSBFdhsQe8TDX9MbM4YE9ZvE5B+kRwoYJQHSE+8xWc8peK7/ESUuLi2tuFCGGEd3YcdMvHxxPOzV8Wcj52YhHKRGERPlNGvr6Z16UJOI/g1Pio/JKONUmVQnuzkfe0LiGS2H915S9z3mlbRGroB9+GrATfd7AEtcxFwIDAQAB'
+
+# #     publ_k = wallet.public_key_from_string(pub_key)
+# #     print(publ_k)
+# #     print(dir(publ_k))
+
+# #     # Serialize PUBLIC KEY to bytestring
+# #     e = publ_k.public_bytes(
+# #         encoding=serialization.Encoding.PEM,
+# #         format=serialization.PublicFormat.SubjectPublicKeyInfo
+# #     )
+
+# #     print(e)

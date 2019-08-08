@@ -64,6 +64,7 @@ class Blockchain:
                 transactions=[
                     Transaction(
                         sender=tx['sender'],
+                        public_key=tx['public_key'],
                         signature=tx['signature'],
                         recipient=tx['recipient'],
                         amount=tx['amount']
@@ -87,6 +88,7 @@ class Blockchain:
         self.__open_transactions = [
             Transaction(
                 sender=tx['sender'],
+                public_key=tx['public_key'],
                 signature=tx['signature'],
                 recipient=tx['recipient'],
                 amount=tx['amount']
@@ -226,7 +228,7 @@ class Blockchain:
             return self.__chain[-1]
         return None
 
-    def add_transaction(self, sender, signature, recipient, amount):
+    def add_transaction(self, sender, public_key, signature, recipient, amount):
         '''Add transaction to th open transactions list
         Arguments:
             :sender: sender wallet address
@@ -242,6 +244,7 @@ class Blockchain:
 
         transaction = Transaction(
             sender=sender,
+            public_key=public_key,
             signature=signature,
             recipient=recipient,
             amount=amount
@@ -288,7 +291,7 @@ class Blockchain:
         # Check signatures opened transactions before adding to block
         for tx in self.__open_transactions:
             message = tx.sender + tx.recipient + str(tx.amount)
-            if not Wallet.check_signature(self.hosting_node_public_key, message, tx.signature):
+            if not Wallet.check_signature(tx.public_key, message, tx.signature):
                 # print(f'Transaction to {tx.recipient} with amount: {tx.amount} has bad signature! Block not be mine')
                 response['message'] = f'Transaction to {tx.recipient} has bad signature'
                 response['balance'] = self.get_balance(self.hosting_node_id)
@@ -297,6 +300,7 @@ class Blockchain:
         # Reward transaction for miners
         reward_transaction = Transaction(
             sender='MINING_REWARD_BOT',
+            public_key='MINING_REWARD_BOT_PUBLIC_KEY',
             signature='MINING_REWARD_BOT_SIGNATURE',
             recipient=self.hosting_node_id,
             amount=MINING_REWARD
@@ -322,8 +326,11 @@ class Blockchain:
         # Clear open transactions
         self.__open_transactions.clear()
 
-        # Save blockchain to file
+        # Save blockchain to file after mining block
         self.save_blockchain()
+
+        # Save transactions to file after mining block
+        self.save_open_transactions()
 
         response['block'] = self.block_as_dict(block)
         response['message'] = f'Block successfuly added to blockchain'
