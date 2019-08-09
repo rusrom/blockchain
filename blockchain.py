@@ -124,6 +124,26 @@ class Blockchain:
         # Convert list of open transactions from Transaction Classes to dicts
         return [tx.__dict__.copy() for tx in self.__open_transactions]
 
+    def block_as_object(self, block_dict):
+        block = Block(
+            index=block_dict['index'],
+            previous_hash=block_dict['previous_hash'],
+            # All transactions from dict to Transaction Class
+            transactions=[
+                Transaction(
+                    sender=tx['sender'],
+                    public_key=tx['public_key'],
+                    signature=tx['signature'],
+                    recipient=tx['recipient'],
+                    amount=tx['amount']
+                )
+                for tx in block_dict['transactions']
+            ],
+            nonce=block_dict['nonce'],
+            timestamp=block_dict['timestamp']
+        )
+        return block
+
     def save_blockchain(self):
         # Convert list of Block Classes to list of dicts
         blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
@@ -342,6 +362,31 @@ class Blockchain:
         response['message'] = f'Block successfuly added to blockchain'
         response['balance'] = self.get_balance(self.hosting_node_id)
         return response
+
+    def add_block(self, broadcsast_block):
+        '''Add block to blockchain after broadcast request'''
+        block = self.block_as_object(broadcsast_block)
+
+        # Check Proof of Work of broadcating block
+        is_valid_pow = Verification.valid_proof(block.transactions, block.previous_hash, block.nonce, DIFFICULTY)
+        if not is_valid_pow:
+            print('Error in Proof of Work of broadcating block')
+            return False
+
+        # Check previous block hashes of current node and broadcasted block
+        is_hashes_match = hash_block(self.__chain[-1]) == block.previous_hash
+        if not is_hashes_match:
+            print('Error in previous block hashes of recieving node and broadcasted block')
+            return False
+
+        # Add broadcasted block to current node blockchain
+        self.__chain.append(block)
+        print('Broadcasted block was added to current node blockchain')
+
+        # Save blockchain to file after adding broadcasted block
+        self.save_blockchain()
+
+        return True
 
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)

@@ -94,6 +94,43 @@ def broadcast_transaction():
     return jsonify(response), status_code
 
 
+@app.route('/broadcast-block', methods=['POST'])
+def broadcast_block():
+    response = {
+        'block': False
+    }
+
+    broadcast_request = json.loads(request.json)
+
+    # Check request has data
+    if not broadcast_request:
+        response['message'] = 'No data found in request'
+        return jsonify(response), 400
+
+    # Check block was mined by broadcsting node
+    if not broadcast_request['block']:
+        response['message'] = 'Block was not mined on broadcasting node'
+        return jsonify(response), 400
+
+    # Get block data as a dict
+    block = broadcast_request['block']
+
+    # Check last block index in blockchain of current node with recieved broadcast block index
+    if block['index'] == blockchain.get_chain()[-1].index + 1:
+        # index of boadcast block is equal of next index in current node blockchain
+        # current node and broadcasting node has UPTODATE STATE
+        blockchain.add_block(block)
+    elif block['index'] > blockchain.get_chain()[-1].index + 1:
+        # index of boadcast block is greater then next index in current node blockchain
+        # current node blockchain has OLDER STATE
+        pass
+    else:
+        # next block index of current node blockchain is greater then boadcast block index
+        # broadcast node blockchain is OLDER STATE
+        response['message'] = 'Block not added! Broadcast blockchain seems to be shorter has OLDER STATE'
+        return jsonify(response), 409
+
+
 @app.route('/transaction', methods=['POST'])
 def add_transaction():
     status_code = 501
