@@ -184,6 +184,8 @@ class Blockchain:
         last_block_hash = hash_block(last_block)
 
         nonce = 0
+
+        # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
         while not Verification.valid_proof(self.__open_transactions, last_block_hash, nonce, DIFFICULTY):
             nonce += 1
         return nonce
@@ -259,7 +261,7 @@ class Blockchain:
             node_url = f'http://{node}/{endpoint}'
             try:
                 response = requests.post(node_url, json=json.dumps(data_as_dict))
-                print('>>>> response.json()', response.json())
+                # print('>>>> response.json()', response.json())
                 if response.ok:
                     print(f'{node}: Broadcast {data} was accepted')
                 else:
@@ -351,11 +353,11 @@ class Blockchain:
             amount=MINING_REWARD
         )
 
-        # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
-        nonce = self.proof_of_work()
-
         # Add reward transaction
         self.__open_transactions.append(reward_transaction)
+
+        # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
+        nonce = self.proof_of_work()
 
         # Create block
         block = Block(

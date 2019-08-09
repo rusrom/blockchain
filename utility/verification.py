@@ -9,7 +9,8 @@ class Verification:
         '''Check amount of leading zerroes in hash
         Only after getting True inside this function
         new block will be added to the blockchain'''
-        guess = str([tx.to_ordered_dict() for tx in transactions]) + str(last_block_hash) + str(proof)
+        # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
+        guess = str([tx.to_ordered_dict() for tx in transactions[:-1]]) + str(last_block_hash) + str(proof)
         guess_hash = get_sha256(guess)
         print(guess_hash)
         return guess_hash.startswith(difficulty)
