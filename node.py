@@ -100,27 +100,31 @@ def broadcast_block():
         'block': False
     }
 
-    broadcast_request = json.loads(request.json)
+    # Get block data as a dict
+    broadcast_block = json.loads(request.json)
 
     # Check request has data
-    if not broadcast_request:
+    if not broadcast_block:
         response['message'] = 'No data found in request'
         return jsonify(response), 400
 
     # Check block was mined by broadcsting node
-    if not broadcast_request['block']:
+    if not broadcast_block.get('nonce'):
         response['message'] = 'Block was not mined on broadcasting node'
         return jsonify(response), 400
 
-    # Get block data as a dict
-    block = broadcast_request['block']
-
     # Check last block index in blockchain of current node with recieved broadcast block index
-    if block['index'] == blockchain.get_chain()[-1].index + 1:
+    if broadcast_block['index'] == blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is equal of next index in current node blockchain
         # current node and broadcasting node has UPTODATE STATE
-        blockchain.add_block(block)
-    elif block['index'] > blockchain.get_chain()[-1].index + 1:
+        # TODO: Get message that return blockchain.add_block() and add it to response['message']
+        if blockchain.add_block(broadcast_block):
+            response['block'] = True
+            response['message'] = 'BROADCAST BLOCK WAS ADDED'
+            return jsonify(response), 200
+        response['message'] = 'BROADCAST BLOCK ADDING WAS FAILED'
+        return jsonify(response), 409
+    elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is greater then next index in current node blockchain
         # current node blockchain has OLDER STATE
         pass

@@ -248,6 +248,25 @@ class Blockchain:
             return self.__chain[-1]
         return None
 
+    def broadcast_to_other_nodes(self, data_as_dict):
+        '''Broadcast data(block/transaction) to other network nodes
+        Arguments:
+            :data_as_dict: Block/Transaction Object converted to dictionary
+        '''
+        data = 'Block' if data_as_dict.get('nonce') else 'Transaction'
+        endpoint = f'broadcast-block' if data_as_dict.get('nonce') else f'broadcast-transaction'
+        for node in self.__peer_nodes:
+            node_url = f'http://{node}/{endpoint}'
+            try:
+                response = requests.post(node_url, json=json.dumps(data_as_dict))
+                print('>>>> response.json()', response.json())
+                if response.ok:
+                    print(f'{node}: Broadcast {data} was accepted')
+                else:
+                    print(f'{node}: Broadcast {data} was declined, needs resolving')
+            except requests.exceptions.ConnectionError:
+                print(f'{node}: Connection error')
+
     def add_transaction(self, sender, public_key, signature, recipient, amount, broadcast=True):
         '''Add transaction to th open transactions list
         Arguments:
@@ -346,19 +365,23 @@ class Blockchain:
             nonce=nonce
         )
 
-        # Add block to blockchain
+        # Add block to blockchain and save updated blockchain
         self.__chain.append(block)
-
-        # Clear open transactions
-        self.__open_transactions.clear()
-
-        # Save blockchain to file after mining block
         self.save_blockchain()
 
-        # Save transactions to file after mining block
+        # Clear open transactions and save updated
+        self.__open_transactions.clear()
         self.save_open_transactions()
 
-        response['block'] = self.block_as_dict(block)
+        # Convert Block Object to dictionary
+        block_dict = self.block_as_dict(block)
+
+        # Broadcast new block to other nodes
+        # TODO: Add messages that return broadcast_to_other_nodes() to response['message']
+        self.broadcast_to_other_nodes(block_dict)
+
+        # TODO: make only 1 response with block_dict all others calculate in node.py
+        response['block'] = block_dict
         response['message'] = f'Block successfuly added to blockchain'
         response['balance'] = self.get_balance(self.hosting_node_id)
         return response
@@ -367,17 +390,21 @@ class Blockchain:
         '''Add block to blockchain after broadcast request'''
         block = self.block_as_object(broadcsast_block)
 
-        # Check Proof of Work of broadcating block
-        is_valid_pow = Verification.valid_proof(block.transactions, block.previous_hash, block.nonce, DIFFICULTY)
-        if not is_valid_pow:
-            print('Error in Proof of Work of broadcating block')
-            return False
+        # Verify ONLY block that is not Genesis or just 1 MINING REWAARD transaction
+        if len(block.transactions) > 1:
+            # Check Proof of Work of broadcating block
+            is_valid_pow = Verification.valid_proof(block.transactions, block.previous_hash, block.nonce, DIFFICULTY)
+            if not is_valid_pow:
+                print('Error in Proof of Work of broadcating block')
+                return False
 
-        # Check previous block hashes of current node and broadcasted block
-        is_hashes_match = hash_block(self.__chain[-1]) == block.previous_hash
-        if not is_hashes_match:
-            print('Error in previous block hashes of recieving node and broadcasted block')
-            return False
+            # Check previous block hashes of current node and broadcasted block
+            is_hashes_match = hash_block(self.__chain[-1]) == block.previous_hash
+            if not is_hashes_match:
+                print('Error in previous block hashes of recieving node and broadcasted block')
+                return False
+        else:
+            print('Pass checking Genesis or just only one Mining transaction')
 
         # Add broadcasted block to current node blockchain
         self.__chain.append(block)
