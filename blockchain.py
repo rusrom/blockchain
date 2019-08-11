@@ -415,6 +415,15 @@ class Blockchain:
         # Save blockchain to file after adding broadcasted block
         self.save_blockchain()
 
+        # List of mined transactions signatures inside broadcast block
+        mined_transactions_signatures = [tx.signature for tx in block.transactions if tx.sender != 'MINING_REWARD_BOT']
+
+        # Clear open transaction on current node from broadcast block mined transactions
+        self.__open_transactions = [tx for tx in self.__open_transactions if tx.signature not in mined_transactions_signatures]
+
+        # Save cleared open transactions to file on current node
+        self.save_open_transactions()
+
         return True
 
     def save_peer_nodes(self):
