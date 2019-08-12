@@ -34,6 +34,7 @@ class Blockchain:
         )
         self.__chain = [self.genesis_block]
         self.__peer_nodes = set()
+        self.resolve_conflicts = False
         self.load_data()
         self.difficulty = DIFFICULTY
 
@@ -255,19 +256,39 @@ class Blockchain:
         Arguments:
             :data_as_dict: Block/Transaction Object converted to dictionary
         '''
+        result = {
+            'ok': [],
+            'errors': []
+        }
         data = 'Block' if data_as_dict.get('nonce') else 'Transaction'
         endpoint = f'broadcast-block' if data_as_dict.get('nonce') else f'broadcast-transaction'
         for node in self.__peer_nodes:
             node_url = f'http://{node}/{endpoint}'
             try:
                 response = requests.post(node_url, json=json.dumps(data_as_dict))
-                # print('>>>> response.json()', response.json())
                 if response.ok:
+                    result['ok'].append(True)
                     print(f'{node}: Broadcast {data} was accepted')
+                elif response.status_code == 409:
+                    # Broadcast node blockchain has OLDER STATE
+                    error = response.json()
+                    self.resolve_conflicts = True
+                    result['ok'].append(False)
+                    result['errors'].append(f'{node}: Broadcast {data} was declined: {error["message"]}')
+                    print(f'{node}: Broadcast {data} was declined: {error["message"]}')
                 else:
-                    print(f'{node}: Broadcast {data} was declined, needs resolving')
+                    # Possible conflicts to RESOLVE ON BROADCASTING SIDE:
+                    # Proof of Work of broadcating block
+                    # Previous block hashes of recieving node and broadcasted block
+                    error = response.json()
+                    result['ok'].append(False)
+                    result['errors'].append(f'{node}: Broadcast {data} was declined: {error["message"]}')
+                    print(f'{node}: Broadcast {data} was declined! {error["message"]}')
+
             except requests.exceptions.ConnectionError:
                 print(f'{node}: Connection error')
+        result['ok'] = all(result['ok'])
+        return result
 
     def add_transaction(self, sender, public_key, signature, recipient, amount, broadcast=True):
         '''Add transaction to th open transactions list
@@ -326,7 +347,7 @@ class Blockchain:
         response = {
             'block': False,
             'wallet': self.hosting_node_id is not None,
-            'balance': None
+            # 'balance': None
         }
 
         # Check wallet address. We can't mine without wallet address. We need get mining reward
@@ -367,25 +388,29 @@ class Blockchain:
             nonce=nonce
         )
 
-        # Add block to blockchain and save updated blockchain
-        self.__chain.append(block)
-        self.save_blockchain()
-
-        # Clear open transactions and save updated
-        self.__open_transactions.clear()
-        self.save_open_transactions()
-
         # Convert Block Object to dictionary
         block_dict = self.block_as_dict(block)
 
         # Broadcast new block to other nodes
         # TODO: Add messages that return broadcast_to_other_nodes() to response['message']
-        self.broadcast_to_other_nodes(block_dict)
+        result = self.broadcast_to_other_nodes(block_dict)
+
+        if result['ok']:
+            # Add block to blockchain and save updated blockchain
+            self.__chain.append(block)
+            self.save_blockchain()
+
+            # Clear open transactions and save updated
+            self.__open_transactions.clear()
+            self.save_open_transactions()
+
+            response['block'] = block_dict
+            response['message'] = f'Block successfuly added to blockchain'
+        else:
+            response['message'] = '\n'.join(result['errors'])
 
         # TODO: make only 1 response with block_dict all others calculate in node.py
-        response['block'] = block_dict
-        response['message'] = f'Block successfuly added to blockchain'
-        response['balance'] = self.get_balance(self.hosting_node_id)
+        # response['balance'] = self.get_balance(self.hosting_node_id)
         return response
 
     def add_block(self, broadcsast_block):

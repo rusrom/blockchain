@@ -86,6 +86,7 @@ def broadcast_transaction():
                 response['transaction'] = transaction
                 status_code = 200
             else:
+                # TODO: get clear message abot decline reason
                 response['message'] = f'Transaction was not accepted by {blockchain.hosting_node_port}'
                 status_code = 500
         else:
@@ -122,16 +123,20 @@ def broadcast_block():
             response['block'] = True
             response['message'] = 'BROADCAST BLOCK WAS ADDED'
             return jsonify(response), 200
+        # Broadcasted block was not excepted by current node on some reason
         response['message'] = 'BROADCAST BLOCK ADDING WAS FAILED'
-        return jsonify(response), 409
+        return jsonify(response), 400
     elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is greater then next index in current node blockchain
         # current node blockchain has OLDER STATE
-        pass
+        response['message'] = 'Broadcast blockchain seems to be LONGER STATE'
+        # RESOLVE ON RECIEVING SIDE blockchain not in SYNC: Need update blockchain to lobgest one
+        blockchain.resolve_conflicts = True
+        return jsonify(response), 200
     else:
         # next block index of current node blockchain is greater then boadcast block index
         # broadcast node blockchain is OLDER STATE
-        response['message'] = 'Block not added! Broadcast blockchain seems to be shorter has OLDER STATE'
+        response['message'] = 'Your blockchain has SHORTER CHAIN then other nodes'
         return jsonify(response), 409
 
 
@@ -192,11 +197,16 @@ def get_open_transactions():
 
 @app.route('/mine', methods=['POST'])
 def mine():
+    # Check blockchain SYNC: Need update blockchain to lobgest one?
+    if blockchain.resolve_conflicts:
+        response = {'message': 'Resolve conflict. Node blockchain is not in sync with network'}
+        return jsonify(response), 409
+
     status_code = 501
     response = blockchain.mine_block()
     if response['block']:
-        # return jsonify(response), 200
         status_code = 200
+    response['balance'] = blockchain.get_balance(blockchain.hosting_node_id)
     return jsonify(response), status_code
 
 
