@@ -30,7 +30,8 @@ class Blockchain:
             index=0,
             previous_hash='Genesis_Block',
             transactions=self.__open_transactions[:],
-            nonce=0
+            nonce=0,
+            timestamp=0,
         )
         self.__chain = [self.genesis_block]
         self.__peer_nodes = set()
@@ -51,7 +52,7 @@ class Blockchain:
                 file_content = f.read()
         except FileNotFoundError:
             print('Genesis block innit...')
-            return
+            return None
 
         # Convert file content to right format
         corrected_blockchain_dump = []
@@ -84,7 +85,7 @@ class Blockchain:
                 file_content = f.read()
         except FileNotFoundError:
             print('Genesis block innit...')
-            return
+            return None
 
         self.__open_transactions = [
             Transaction(
@@ -267,7 +268,7 @@ class Blockchain:
             try:
                 response = requests.post(node_url, json=json.dumps(data_as_dict))
                 if response.ok:
-                    result['ok'].append(True)
+                    result['ok'] = True
                     print(f'{node}: Broadcast {data} was accepted')
                 elif response.status_code == 409:
                     # Broadcast node blockchain has OLDER STATE
@@ -451,6 +452,36 @@ class Blockchain:
 
         return True
 
+    def resolve(self):
+        '''
+        Update OLD STATE blockchain of current node to longest one from configured peer nodes
+        '''
+        longest_blockchain = []
+        for node in self.__peer_nodes:
+            node_url = f'http://{node}/chain'
+            try:
+                response = requests.get(node_url)
+            except requests.exceptions.ConnectionError:
+                continue
+
+            if not response.ok:
+                continue
+
+            remote_blockchain = response.json()
+
+            # Find longest blockchain among configured peers
+            if len(longest_blockchain) < len(remote_blockchain):
+                longest_blockchain = remote_blockchain
+
+        longest_blockchain = [self.block_as_object(block_dict) for block_dict in longest_blockchain]
+        if Verification.verify_chain(longest_blockchain, DIFFICULTY):
+            self.__chain = longest_blockchain
+            self.save_blockchain()
+            self.__open_transactions.clear()
+            self.save_open_transactions()
+            self.resolve_conflicts = False
+            print('Updated current blockchain length:', len(self.__chain))
+
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)
         peer_nodes_string = json.dumps(peer_nodes_list)
@@ -485,3 +516,10 @@ class Blockchain:
     def nodes(self):
         '''Return a list of all connected nodes'''
         return list(self.__peer_nodes)
+
+if __name__ == "__main__":
+    blockchain = Blockchain(5005)
+    print(f'Current blockchain length: {len(blockchain.get_chain())}')
+    blockchain.resolve()
+    print(blockchain.chain_dict)
+    print('Current blockchain length:', len(blockchain.get_chain()))

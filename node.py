@@ -128,9 +128,9 @@ def broadcast_block():
         return jsonify(response), 400
     elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is greater then next index in current node blockchain
-        # current node blockchain has OLDER STATE
+        # Recieving current node blockchain has OLDER STATE
         response['message'] = 'Broadcast blockchain seems to be LONGER STATE'
-        # RESOLVE ON RECIEVING SIDE blockchain not in SYNC: Need update blockchain to lobgest one
+        # RESOLVE ON RECIEVING SIDE blockchain not in SYNC: Need update blockchain to longest one
         blockchain.resolve_conflicts = True
         return jsonify(response), 200
     else:

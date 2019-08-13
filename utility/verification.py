@@ -25,7 +25,8 @@ class Verification:
                 return False
             # Verify PoW of current block
             print('Verify chain > Validate PoW')
-            if not cls.valid_proof(block.transactions[:-1], block.previous_hash, block.nonce, difficulty):
+            # if not cls.valid_proof(block.transactions[:-1], block.previous_hash, block.nonce, difficulty):
+            if not cls.valid_proof(block.transactions, block.previous_hash, block.nonce, difficulty):
                 print('Proof of Work is invalid')
                 return False
         return True
