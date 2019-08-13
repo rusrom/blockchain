@@ -268,15 +268,15 @@ class Blockchain:
             try:
                 response = requests.post(node_url, json=json.dumps(data_as_dict))
                 if response.ok:
-                    result['ok'] = True
+                    result['ok'].append(True)
                     print(f'{node}: Broadcast {data} was accepted')
                 elif response.status_code == 409:
                     # Broadcast node blockchain has OLDER STATE
                     error = response.json()
                     self.resolve_conflicts = True
                     result['ok'].append(False)
-                    result['errors'].append(f'{node}: Broadcast {data} was declined: {error["message"]}')
-                    print(f'{node}: Broadcast {data} was declined: {error["message"]}')
+                    result['errors'].append(f'{node}: Broadcast {data} was declined! {error["message"]}')
+                    print(f'{node}: Broadcast {data} was declined! {error["message"]}')
                 else:
                     # Possible conflicts to RESOLVE ON BROADCASTING SIDE:
                     # Proof of Work of broadcating block
@@ -285,9 +285,9 @@ class Blockchain:
                     result['ok'].append(False)
                     result['errors'].append(f'{node}: Broadcast {data} was declined: {error["message"]}')
                     print(f'{node}: Broadcast {data} was declined! {error["message"]}')
-
             except requests.exceptions.ConnectionError:
                 print(f'{node}: Connection error')
+
         result['ok'] = all(result['ok'])
         return result
 
@@ -410,8 +410,6 @@ class Blockchain:
         else:
             response['message'] = '\n'.join(result['errors'])
 
-        # TODO: make only 1 response with block_dict all others calculate in node.py
-        # response['balance'] = self.get_balance(self.hosting_node_id)
         return response
 
     def add_block(self, broadcsast_block):
@@ -481,6 +479,8 @@ class Blockchain:
             self.save_open_transactions()
             self.resolve_conflicts = False
             print('Updated current blockchain length:', len(self.__chain))
+            return True
+        return False
 
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)

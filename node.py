@@ -95,6 +95,15 @@ def broadcast_transaction():
     return jsonify(response), status_code
 
 
+@app.route('/resolve-conflicts', methods=['POST'])
+def resolve_conflicts():
+    response = {'message': 'Local blockchain is kept'}
+    result = blockchain.resolve()
+    if result:
+        response['message'] = 'Blackchain was updated'
+    return jsonify(response), 200
+
+
 @app.route('/broadcast-block', methods=['POST'])
 def broadcast_block():
     response = {
@@ -129,8 +138,8 @@ def broadcast_block():
     elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is greater then next index in current node blockchain
         # Recieving current node blockchain has OLDER STATE
-        response['message'] = 'Broadcast blockchain seems to be LONGER STATE'
-        # RESOLVE ON RECIEVING SIDE blockchain not in SYNC: Need update blockchain to longest one
+        response['message'] = 'Block didnt add! Broadcast blockchain seems to be LONGER STATE'
+        # RESOLVE ON RECIEVING SIDE: Blockchain is not in SYNC! Need update blockchain to longest one
         blockchain.resolve_conflicts = True
         return jsonify(response), 200
     else:
