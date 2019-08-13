@@ -97,11 +97,21 @@ def broadcast_transaction():
 
 @app.route('/resolve-conflicts', methods=['POST'])
 def resolve_conflicts():
-    response = {'message': 'Local blockchain is kept'}
-    result = blockchain.resolve()
-    if result:
-        response['message'] = 'Blackchain was updated'
-    return jsonify(response), 200
+    status_code = 500
+    response = {}
+
+    # Check configured remote nodes
+    if blockchain.nodes:
+        result = blockchain.resolve()
+        if result:
+            status_code = 200
+            response['message'] = 'Blackchain was successfuly updated'
+        else:
+            response['message'] = 'Error during Blackchain update'
+    else:
+        response['message'] = 'No configured network nodes'
+
+    return jsonify(response), status_code
 
 
 @app.route('/broadcast-block', methods=['POST'])
@@ -139,6 +149,7 @@ def broadcast_block():
         # index of boadcast block is greater then next index in current node blockchain
         # Recieving current node blockchain has OLDER STATE
         response['message'] = 'Block didnt add! Broadcast blockchain seems to be LONGER STATE'
+        print('Block didnt add! Broadcast blockchain seems to be LONGER STATE')
         # RESOLVE ON RECIEVING SIDE: Blockchain is not in SYNC! Need update blockchain to longest one
         blockchain.resolve_conflicts = True
         return jsonify(response), 200
