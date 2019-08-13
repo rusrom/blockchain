@@ -11,4 +11,3 @@ class Block:
 
     def __repr__(self):
         return str(self.__dict__)
-        # return f'<Class Block ({self.index:0>3}): prev_hash: {self.previous_hash}, txs: {self.transactions}, nonce: {self.nonce}>'

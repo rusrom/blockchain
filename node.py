@@ -10,9 +10,6 @@ from wallet import Wallet
 app = Flask(__name__)
 CORS(app)
 
-# blockchain = Blockchain()
-# wallet = Wallet()
-
 
 @app.route('/', methods=['GET'])
 def get_node_ui():
@@ -199,8 +196,6 @@ def add_transaction():
     else:
         response['message'] = 'No data found inside incoming request'
 
-    # if response['transaction']:
-    #     return jsonify(response), 200
     return jsonify(response), status_code
 
 

@@ -1,13 +1,10 @@
 import json
 import pickle
 import requests
-# from hashlib import sha256
 
-# from hash_util import hash_block
 from utility.hash_util import hash_block
 from block import Block
 from transaction import Transaction
-# from verification import Verification
 from utility.verification import Verification
 
 from wallet import Wallet
@@ -15,9 +12,6 @@ from wallet import Wallet
 
 MINING_REWARD = 10
 DIFFICULTY = '0' * 2
-
-
-# verifier = Verification()
 
 
 class Blockchain:
