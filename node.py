@@ -60,11 +60,11 @@ def get_balance():
 
 @app.route('/broadcast-transaction', methods=['POST'])
 def broadcast_transaction():
+    '''
+    Return result of adding broadcast transaction as message with appropriate status code
+    '''
     status_code = 400
-    response = {
-        'message': 'No data found in request',
-        'transaction': False
-    }
+    response = {'message': 'No data found in request'}
 
     transaction = json.loads(request.json)
     if transaction:
@@ -78,14 +78,9 @@ def broadcast_transaction():
                 amount=transaction['amount'],
                 broadcast=False
             )
-            if result:
-                response['message'] = 'Successfuly added transaction'
-                response['transaction'] = transaction
+            if result['transaction']:
                 status_code = 200
-            else:
-                # TODO: get clear message abot decline reason
-                response['message'] = f'Transaction was not accepted by {blockchain.hosting_node_port}'
-                status_code = 500
+            response['message'] = result['message']
         else:
             response['message'] = 'Missing required field(s)'
 
@@ -182,14 +177,14 @@ def add_transaction():
             signature = wallet.sign_transaction(message)
 
             # Add transaction
-            transaction = blockchain.add_transaction(wallet.address, wallet.public_key_to_string(), signature, recipient, amount)
-            if transaction:
-                response['message'] = 'Successfuly added transaction'
-                response['transaction'] = transaction
+            result = blockchain.add_transaction(wallet.address, wallet.public_key_to_string(), signature, recipient, amount)
+            if result['transaction']:
+                response['message'] = result['message']
+                response['transaction'] = result['transaction']
                 response['balance'] = blockchain.get_balance(wallet.address)
                 status_code = 200
             else:
-                response['message'] = 'Creating transaction faild'
+                response['message'] = result['message']
                 response['balance'] = blockchain.get_balance(wallet.address)
         else:
             response['message'] = 'Required fields missing'

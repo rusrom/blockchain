@@ -286,7 +286,7 @@ class Blockchain:
         return result
 
     def add_transaction(self, sender, public_key, signature, recipient, amount, broadcast=True):
-        '''Add transaction to th open transactions list
+        '''Add transaction to the open transactions list
         Arguments:
             :sender: sender wallet address
             :public_key: sender public key
@@ -294,11 +294,15 @@ class Blockchain:
             :recipient: The recipient of the coins
             :amount: The amount of coins that should be sent
         '''
+        response = {
+            'transaction': False
+        }
 
         # Check wallet address
         if not self.hosting_node_id:
-            print('Adding transactions without wallet address blocked. Please create or restore wallet!')
-            return False
+            print('Adding transactions without wallet address blocked. Create or restore wallet!')
+            response['message'] = 'Adding transactions without wallet address blocked. Create or restore wallet!'
+            return response
 
         transaction = Transaction(
             sender=sender,
@@ -311,43 +315,57 @@ class Blockchain:
         # Check sender balance before accepting transacion
         if not Verification.verify_transaction(transaction, self.get_balance):
             print('Sender balance is not enough for transaction')
-            return False
+            response['message'] = 'Sender balance is not enough for transaction'
+            return response
 
-        # Add transaction to open transactions on current node
-        self.__open_transactions.append(transaction)
+        # # Add transaction to open transactions on current node
+        # self.__open_transactions.append(transaction)
 
-        # Save open transactions to file on current node
-        self.save_open_transactions()
+        # # Save open transactions to file on current node
+        # self.save_open_transactions()
 
         transaction_as_dict = transaction.__dict__.copy()
 
         # Broadcast transaction to other nodes only if current node adding it
         if broadcast:
-            for node in self.__peer_nodes:
-                node_url = f'http://{node}/broadcast-transaction'
-                try:
-                    response = requests.post(node_url, json=json.dumps(transaction_as_dict))
-                    if response.ok:
-                        print(f'Transaction accepted by {node}')
-                    else:
-                        print(f'{node}: Transaction declined, needs resolving')
-                        continue
-                except requests.exceptions.ConnectionError:
-                    print(f'{node}: Connection error')
-                    continue
-            print('Transaction saved on current node and broadcasted on other.')
-        return transaction_as_dict
+            result = self.broadcast_to_other_nodes(transaction_as_dict)
+            # for node in self.__peer_nodes:
+            #     node_url = f'http://{node}/broadcast-transaction'
+            #     try:
+            #         response = requests.post(node_url, json=json.dumps(transaction_as_dict))
+            #         if response.ok:
+            #             print(f'Transaction accepted by {node}')
+            #         else:
+            #             print(f'{node}: Transaction declined, needs resolving')
+            #             continue
+            #     except requests.exceptions.ConnectionError:
+            #         print(f'{node}: Connection error')
+            #         continue
+            # print('Transaction saved on current node and broadcasted on other.')
+        else:
+            result = {'ok': True}
+
+        if result['ok']:
+            # Add transaction on current node and save transactions
+            self.__open_transactions.append(transaction)
+            self.save_open_transactions()
+
+            response['transaction'] = transaction_as_dict
+            response['message'] = f'Transaction successfuly added'
+        else:
+            response['message'] = '\n'.join(result['errors'])
+
+        return response
+        # return transaction_as_dict
 
     def mine_block(self):
         response = {
             'block': False,
             'wallet': self.hosting_node_id is not None,
-            # 'balance': None
         }
 
         # Check wallet address. We can't mine without wallet address. We need get mining reward
         if not self.hosting_node_id:
-            # print('Can\'t mine without wallet address. Please create or restore wallet!')
             response['message'] = 'Create or restore wallet'
             return response
 
@@ -355,9 +373,8 @@ class Blockchain:
         for tx in self.__open_transactions:
             message = tx.sender + tx.recipient + str(tx.amount)
             if not Wallet.check_signature(tx.public_key, message, tx.signature):
-                # print(f'Transaction to {tx.recipient} with amount: {tx.amount} has bad signature! Block not be mine')
                 response['message'] = f'Transaction to {tx.recipient} has bad signature'
-                response['balance'] = self.get_balance(self.hosting_node_id)
+                # response['balance'] = self.get_balance(self.hosting_node_id)
                 return response
 
         # Reward transaction for miners
@@ -387,7 +404,6 @@ class Blockchain:
         block_dict = self.block_as_dict(block)
 
         # Broadcast new block to other nodes
-        # TODO: Add messages that return broadcast_to_other_nodes() to response['message']
         result = self.broadcast_to_other_nodes(block_dict)
 
         if result['ok']:
