@@ -29,8 +29,8 @@ class Blockchain:
         )
         self.__chain = [self.genesis_block]
         self.__peer_nodes = set()
-        self.resolve_conflicts = False
         self.load_data()
+        self.resolve_conflicts = self.is_chain_unsynced()
         self.difficulty = DIFFICULTY
 
     def get_chain(self):
@@ -326,6 +326,12 @@ class Blockchain:
             response['message'] = 'Adding transactions without wallet address blocked. Create or restore wallet!'
             return response
 
+        # Check chain sync with other peer nodes
+        if self.resolve_conflicts:
+            print('Blockchain has OLDER STATE. Need update node blockchain!')
+            response['message'] = 'Blockchain has OLDER STATE. Update it!'
+            return response
+
         transaction = Transaction(
             sender=sender,
             public_key=public_key,
@@ -474,6 +480,24 @@ class Blockchain:
         self.save_open_transactions()
 
         return True
+
+    def is_chain_unsynced(self):
+        '''Check blockchain sync
+        Chain is synced when its length >= then other peer node chains
+        False = Synced
+        True = Unsynced
+        '''
+        chains = [len(self.__chain)]
+        for node in self.__peer_nodes:
+            node_url = f'http://{node}/chain'
+            try:
+                response = requests.get(node_url)
+            except requests.exceptions.ConnectionError:
+                print(f'{node} Conection Error!')
+                continue
+            remote_blockchain = response.json()
+            chains.append(len(remote_blockchain))
+        return len(self.__chain) < max(chains)
 
     def resolve(self):
         '''
