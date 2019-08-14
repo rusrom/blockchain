@@ -79,7 +79,7 @@ def broadcast_transaction():
                 amount=transaction['amount'],
                 broadcast=False
             )
-            if result['transaction']:
+            if result['transaction'] or 'OLDER STATE' in result['message']:
                 status_code = 200
             response['message'] = result['message']
         else:
@@ -141,8 +141,8 @@ def broadcast_block():
     elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
         # index of boadcast block is greater then next index in current node blockchain
         # Recieving current node blockchain has OLDER STATE
-        response['message'] = 'Block didnt add! Broadcast blockchain seems to be LONGER STATE'
-        print('Block didnt add! Broadcast blockchain seems to be LONGER STATE')
+        response['message'] = 'Failed! Broadcast blockchain is LONGER'
+        print('Block didnt add! Broadcast blockchain is LONGER')
         # RESOLVE ON RECIEVING SIDE: Blockchain is not in SYNC! Need update blockchain to longest one
         blockchain.resolve_conflicts = True
         return jsonify(response), 200
