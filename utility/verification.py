@@ -12,7 +12,7 @@ class Verification:
         # IMPORTANT: Proof of Work should NOT INCLUDE REWARD TRANSACTION
         guess = str([tx.to_ordered_dict() for tx in transactions[:-1]]) + str(last_block_hash) + str(proof)
         guess_hash = get_sha256(guess)
-        print(guess_hash)
+        print('Verify nonce:', guess_hash)
         return guess_hash.startswith(difficulty)
 
     @classmethod
@@ -20,6 +20,7 @@ class Verification:
         '''Verify each block['previous_block_hash'] vith calculated hash_block() of previous block'''
         for previous_block, block in enumerate(blockchain[1:]):
             # Verify previous block hash
+            print('erify chain > Verify previous block hash')
             if block.previous_hash != hash_block(blockchain[previous_block]):
                 print('Previous block hash is invalid')
                 return False

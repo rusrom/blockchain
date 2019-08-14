@@ -100,12 +100,18 @@ class Blockchain:
 
     @property
     def chain_dict(self):
-        # Convert list of Block Classes to list of dicts
-        blockchain_blocks_to_dict = [block.__dict__.copy() for block in self.__chain]
+        # Convert list of Block Objects to list of dicts
+        blockchain_blocks_to_dict = [
+            block.__dict__.copy()
+            for block in self.__chain
+        ]
 
-        # Convert block transactions from Transaction Classes to dicts
+        # Convert block transactions from Transaction Objects to dicts
         for block in blockchain_blocks_to_dict:
-            block['transactions'] = [tx.__dict__ for tx in block['transactions']]
+            block['transactions'] = [
+                tx.__dict__
+                for tx in block['transactions']
+            ]
 
         return blockchain_blocks_to_dict
 
@@ -119,6 +125,22 @@ class Blockchain:
     def open_transactions_as_dict(self):
         # Convert list of open transactions from Transaction Classes to dicts
         return [tx.__dict__.copy() for tx in self.__open_transactions]
+
+    def tansactions_as_objects(self, list_transactions_dicts):
+        '''Convert list of transactions dicts
+        to list of Transaction Objects
+        '''
+        transactions = [
+            Transaction(
+                sender=tx['sender'],
+                public_key=tx['public_key'],
+                signature=tx['signature'],
+                recipient=tx['recipient'],
+                amount=tx['amount']
+            )
+            for tx in list_transactions_dicts
+        ]
+        return transactions
 
     def block_as_object(self, block_dict):
         block = Block(
@@ -204,7 +226,7 @@ class Blockchain:
             if tx.sender == participant
         ]
 
-        # Participant's All sending transactions that are in open_transactions(pool)
+        # Participant's All sending transactions in open_transactions
         tx_open = [
             tx.amount
             for tx in self.__open_transactions
@@ -329,19 +351,6 @@ class Blockchain:
         # Broadcast transaction to other nodes only if current node adding it
         if broadcast:
             result = self.broadcast_to_other_nodes(transaction_as_dict)
-            # for node in self.__peer_nodes:
-            #     node_url = f'http://{node}/broadcast-transaction'
-            #     try:
-            #         response = requests.post(node_url, json=json.dumps(transaction_as_dict))
-            #         if response.ok:
-            #             print(f'Transaction accepted by {node}')
-            #         else:
-            #             print(f'{node}: Transaction declined, needs resolving')
-            #             continue
-            #     except requests.exceptions.ConnectionError:
-            #         print(f'{node}: Connection error')
-            #         continue
-            # print('Transaction saved on current node and broadcasted on other.')
         else:
             result = {'ok': True}
 
@@ -356,7 +365,6 @@ class Blockchain:
             response['message'] = '\n'.join(result['errors'])
 
         return response
-        # return transaction_as_dict
 
     def mine_block(self):
         response = {
@@ -364,7 +372,7 @@ class Blockchain:
             'wallet': self.hosting_node_id is not None,
         }
 
-        # Check wallet address. We can't mine without wallet address. We need get mining reward
+        # Check wallet address. We can't mine without wallet address.
         if not self.hosting_node_id:
             response['message'] = 'Create or restore wallet'
             return response
@@ -374,7 +382,6 @@ class Blockchain:
             message = tx.sender + tx.recipient + str(tx.amount)
             if not Wallet.check_signature(tx.public_key, message, tx.signature):
                 response['message'] = f'Transaction to {tx.recipient} has bad signature'
-                # response['balance'] = self.get_balance(self.hosting_node_id)
                 return response
 
         # Reward transaction for miners
@@ -426,7 +433,7 @@ class Blockchain:
         '''Add block to blockchain after broadcast request'''
         block = self.block_as_object(broadcsast_block)
 
-        # Verify ONLY block that is not Genesis or just 1 MINING REWAARD transaction
+        # Verify ONLY block that is not Genesis or just 1 MINING REWARD transaction
         if len(block.transactions) > 1:
             # Check Proof of Work of broadcating block
             is_valid_pow = Verification.valid_proof(block.transactions, block.previous_hash, block.nonce, DIFFICULTY)
@@ -450,10 +457,18 @@ class Blockchain:
         self.save_blockchain()
 
         # List of mined transactions signatures inside broadcast block
-        mined_transactions_signatures = [tx.signature for tx in block.transactions if tx.sender != 'MINING_REWARD_BOT']
+        mined_transactions_signatures = [
+            tx.signature
+            for tx in block.transactions
+            if tx.sender != 'MINING_REWARD_BOT'
+        ]
 
-        # Clear open transaction on current node from broadcast block mined transactions
-        self.__open_transactions = [tx for tx in self.__open_transactions if tx.signature not in mined_transactions_signatures]
+        # Delete mined transactions from open transaction on current node
+        self.__open_transactions = [
+            tx
+            for tx in self.__open_transactions
+            if tx.signature not in mined_transactions_signatures
+        ]
 
         # Save cleared open transactions to file on current node
         self.save_open_transactions()
@@ -464,7 +479,11 @@ class Blockchain:
         '''
         Update OLD STATE blockchain of current node to longest one from configured peer nodes
         '''
-        longest_blockchain = []
+        winner = {
+            'node': None,
+            'chain': [],
+        }
+
         for node in self.__peer_nodes:
             node_url = f'http://{node}/chain'
             try:
@@ -478,19 +497,79 @@ class Blockchain:
             remote_blockchain = response.json()
 
             # Find longest blockchain among configured peers
-            if len(longest_blockchain) < len(remote_blockchain):
-                longest_blockchain = remote_blockchain
+            if len(winner['chain']) < len(remote_blockchain):
+                winner['node'] = node
+                winner['chain'] = remote_blockchain
 
-        longest_blockchain = [self.block_as_object(block_dict) for block_dict in longest_blockchain]
-        if Verification.verify_chain(longest_blockchain, DIFFICULTY):
-            self.__chain = longest_blockchain
+        # Convert chain to list of Block Objects
+        winner['chain'] = [
+            self.block_as_object(block_dict)
+            for block_dict in winner['chain']
+        ]
+
+        if Verification.verify_chain(winner['chain'], DIFFICULTY):
+            # Update Blockchain
+            self.__chain = winner['chain']
             self.save_blockchain()
-            self.__open_transactions.clear()
+
+            # Get winner node open transactions
+            node = winner['node']
+            node_url = f'http://{node}/transactions'
+
+            try:
+                response = requests.get(node_url)
+            except requests.exceptions.ConnectionError:
+                print('Connection error with winner node')
+
+            # Update open transactions
+            if response.ok:
+                winner_txs = response.json()
+                winner_txs = self.tansactions_as_objects(winner_txs)
+                self.__open_transactions = winner_txs
+            else:
+                self.__open_transactions.clear()
+
             self.save_open_transactions()
+
             self.resolve_conflicts = False
             print('Updated current blockchain length:', len(self.__chain))
             return True
         return False
+
+    # def resolve(self):
+    #     '''
+    #     Update OLD STATE blockchain of current node to longest one from configured peer nodes
+    #     '''
+    #     longest_blockchain = []
+    #     for node in self.__peer_nodes:
+    #         node_url = f'http://{node}/chain'
+    #         try:
+    #             response = requests.get(node_url)
+    #         except requests.exceptions.ConnectionError:
+    #             continue
+
+    #         if not response.ok:
+    #             continue
+
+    #         remote_blockchain = response.json()
+
+    #         # Find longest blockchain among configured peers
+    #         if len(longest_blockchain) < len(remote_blockchain):
+    #             longest_blockchain = remote_blockchain
+
+    #     longest_blockchain = [
+    #         self.block_as_object(block_dict)
+    #         for block_dict in longest_blockchain
+    #     ]
+    #     if Verification.verify_chain(longest_blockchain, DIFFICULTY):
+    #         self.__chain = longest_blockchain
+    #         self.save_blockchain()
+    #         self.__open_transactions.clear()
+    #         self.save_open_transactions()
+    #         self.resolve_conflicts = False
+    #         print('Updated current blockchain length:', len(self.__chain))
+    #         return True
+    #     return False
 
     def save_peer_nodes(self):
         peer_nodes_list = list(self.__peer_nodes)
@@ -511,14 +590,16 @@ class Blockchain:
     def add_peer_node(self, node):
         '''Add a new node to the peer node set
         Arguments:
-            :node: The node URL which should be added'''
+            :node: The node URL which should be added
+        '''
         self.__peer_nodes.add(node)
         self.save_peer_nodes()
 
     def remove_peer_node(self, node):
         '''Remove node from the peer node set
         Arguments:
-            :node: The node URL which should be removed'''
+            :node: The node URL which should be removed
+        '''
         self.__peer_nodes.discard(node)
         self.save_peer_nodes()
 

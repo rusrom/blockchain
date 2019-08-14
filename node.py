@@ -60,8 +60,9 @@ def get_balance():
 
 @app.route('/broadcast-transaction', methods=['POST'])
 def broadcast_transaction():
-    '''
-    Return result of adding broadcast transaction as message with appropriate status code
+    '''Return result of adding broadcast transaction on remote peer node
+    as descriptive message with appropriate status code.
+    Result catched by brodcasting node with blockchain.broadcast_to_other_nodes() method
     '''
     status_code = 400
     response = {'message': 'No data found in request'}
@@ -134,7 +135,7 @@ def broadcast_block():
             response['block'] = True
             response['message'] = 'BROADCAST BLOCK WAS ADDED'
             return jsonify(response), 200
-        # Broadcasted block was not excepted by current node on some reason
+        # Broadcasted block was not excepted by current node
         response['message'] = 'BROADCAST BLOCK ADDING WAS FAILED'
         return jsonify(response), 400
     elif broadcast_block['index'] > blockchain.get_chain()[-1].index + 1:
@@ -154,6 +155,7 @@ def broadcast_block():
 
 @app.route('/transaction', methods=['POST'])
 def add_transaction():
+    '''Add new transaction'''
     status_code = 501
     response = {
         'transaction': False,
