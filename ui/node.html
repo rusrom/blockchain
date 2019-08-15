@@ -300,7 +300,6 @@
                             vm.error = error.response.data.message;
                             vm.txLoading = false;
                             if (!error.response.data.message.includes("balance")){
-                                console.log('ddfsdfsdfsdfs');
                                 vm.isNinja = true;
                             }
                         });
