@@ -1,5 +1,5 @@
 ## Blockchain and Cryptocurrency using Python3 and cryptography package  
-<a href="http://www.youtube.com/watch?v=C7agcjpeWfo"><img src="http://dl4.joxi.net/drive/2019/08/16/0034/3632/2272816/16/101b587f64.jpg" alt="Blockchain in Python 3" width="100%" /></a>
+<a href="http://www.youtube.com/watch?v=C7agcjpeWfo"><img src="https://blogs.iadb.org/caribbean-dev-trends/wp-content/uploads/sites/34/2017/12/Blockchain1.jpg" alt="Blockchain in Python 3" width="100%" /></a>
 
 ``cryptography`` is a package which provides cryptographic recipes and primitives to Python developers.  
 
