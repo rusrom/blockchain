@@ -1,0 +1,10 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: blockchain
+  annotations:
+    github.com/project-slug: rusrom/blockchain
+spec:
+  type: other
+  lifecycle: unknown
