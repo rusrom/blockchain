@@ -1,0 +1,9 @@
+site_name: 'blockchain-docs'
+
+nav:
+  - About: index.md
+  - HowTo: howto.md
+  - TrickyFeature: bottleneck.md
+
+plugins:
+  - techdocs-core
