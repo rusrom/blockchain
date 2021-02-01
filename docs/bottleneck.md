@@ -8,6 +8,7 @@ Blockchain is a tamper-resistant and time-stamped database (ledger) operating th
 As such, it can validate transactions and update records in a synchronised, transparent and decentralised way.
 
 Blockchain is based on a particular combination of key features:
+
 1. decentralisation,
 2. tamper-resistance,
 3. transparency, security and
