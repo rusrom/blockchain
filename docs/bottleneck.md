@@ -1,5 +1,5 @@
 ## Helo to Vova's Tesla)))))))
-<img src="https://s7g10.scene7.com/is/image/maserati/maserati/international/Models/my21/ghibli-my21/grigioevoluzione/square/Ghibli_Grey_engine%20cover.jpg?$1600x2000$&fit=constrain" alt="Blockchain in Python 3" width="100%" />
+<img src="data:https://s7g10.scene7.com/is/image/maserati/maserati/international/Models/my21/ghibli-my21/grigioevoluzione/square/Ghibli_Grey_engine%20cover.jpg?$1600x2000$&fit=constrain" alt="Blockchain in Python 3" width="100%" />
 
 ## Blockchain is a promising technology, but bottlenecks and complex challenges lie ahead
 
