@@ -4,6 +4,13 @@
 ``cryptography`` is a package which provides cryptographic recipes and primitives to Python developers.  
 
 How a Blockchain works?    
+
+html
+<img src="hhttps://docs.microsoft.com/en-us/azure/event-hubs/media/event-hubs-about/event_hubs_architecture.svg" alt="Blockchain in Python 3" width="100%" />
+
+Markdown
+![](https://docs.microsoft.com/en-us/azure/event-hubs/media/event-hubs-about/event_hubs_architecture.svg)
+
 It's an exciting project that help to understand what Blockchain really is.  
 
 Some issues that was developed:  
