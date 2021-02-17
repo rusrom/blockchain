@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: blockchain-rest
+  description: The Blockchain REST API
+  tags:
+    - rest
+    - schema
+spec:
+  type: openapi
+  lifecycle: production
+  owner: team-a
+  definition:
+    $text: https://github.com/rusrom/blockchain/blob/master/oas/openapi_powerbi_schema.json

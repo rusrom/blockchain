@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: blockchain-graphql
+  description: Core platform service that can ingest logged user actions from Galileo applications and services
+  tags:
+    - graphql
+    - schema
+spec:
+  type: graphql
+  lifecycle: production
+  owner: team-a
+  definition:
+    $text: https://github.com/rusrom/blockchain/blob/master/oas/powerbi_schema.graphql

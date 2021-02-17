@@ -13,3 +13,6 @@ spec:
   type: service
   lifecycle: production
   owner: rusrom
+  providesApis:
+    - blockchain-rest
+    - blockchain-graphql
