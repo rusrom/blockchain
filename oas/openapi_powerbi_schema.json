@@ -1,0 +1,316 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/reports": {
+      "get": {
+        "tags": [
+          "pbi-reports"
+        ],
+        "summary": "Get All Reports",
+        "description": "Endpoint for receiving all PowerBI reports per user",
+        "operationId": "get_all_reports_api_v1_reports_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pbi-reports"
+        ],
+        "summary": "Create Report",
+        "description": "Endpoint for creating PowerBI report",
+        "operationId": "create_report_api_v1_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "detail": "Report with such ID already exists"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "tags": [
+          "pbi-reports"
+        ],
+        "summary": "Get Report Details",
+        "description": "Endpoint for getting detailed PowerBI report by report ID",
+        "operationId": "get_report_details_api_v1_reports__report_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "title": "Report Id",
+              "type": "string",
+              "format": "uuid"
+            },
+            "name": "report_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": {
+                  "detail": "Report with such ID not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          }
+        }
+      },
+      "Message": {
+        "title": "Message",
+        "required": [
+          "detail"
+        ],
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "description": "Schema for custom response messages"
+      },
+      "ReportDetail": {
+        "title": "ReportDetail",
+        "required": [
+          "report_id",
+          "display_name",
+          "id",
+          "user_id",
+          "created_at"
+        ],
+        "type": "object",
+        "properties": {
+          "report_id": {
+            "title": "Report Id",
+            "type": "string",
+            "format": "uuid"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string",
+            "example": "Display name from UI"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer",
+            "example": 1
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer",
+            "example": 25
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Schema for details of PowerBI report"
+      },
+      "ReportIn": {
+        "title": "ReportIn",
+        "required": [
+          "report_id",
+          "display_name"
+        ],
+        "type": "object",
+        "properties": {
+          "report_id": {
+            "title": "Report Id",
+            "type": "string",
+            "format": "uuid"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string",
+            "example": "Display name from UI"
+          }
+        },
+        "description": "Schema for creating PowerBI report"
+      },
+      "ReportList": {
+        "title": "ReportList",
+        "required": [
+          "reports"
+        ],
+        "type": "object",
+        "properties": {
+          "reports": {
+            "title": "Reports",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "description": "Schema for list of PowerBI report IDs",
+        "example": {
+          "reports": [
+            "e9c0ffd8-47da-434f-a14c-eeb4846b537b",
+            "d6d16572-636a-4add-a155-d2ac7a71686c",
+            "122a4ef3-05b2-4131-b5d3-9c8f8cac5033"
+          ]
+        }
+      },
+      "ReportOut": {
+        "title": "ReportOut",
+        "required": [
+          "report_id",
+          "display_name",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "report_id": {
+            "title": "Report Id",
+            "type": "string",
+            "format": "uuid"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string",
+            "example": "Display name from UI"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer",
+            "example": 1
+          }
+        },
+        "description": "Schema for 201 Created response"
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

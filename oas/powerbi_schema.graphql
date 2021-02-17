@@ -1,0 +1,29 @@
+schema {
+  query: AuditLogQueryObject
+}
+
+type AuditLogObject {
+  id: ID!
+  customerId: String!
+  userId: String!
+  siteId: String!
+  datetimeStamp: DateTime
+  source: String!
+  action: String!
+  objectData: String!
+  category: String!
+}
+
+type AuditLogQueryObject {
+  auditLogs(customerId: UUID!, userId: UUID!, dateTimeStart: DateTime!, dateTimeEnd: DateTime!, page: Int = 1, perPage: Int = 20, source: String): [AuditLogObject]
+}
+
+# The `DateTime` scalar type represents a DateTime
+# value as specified by
+# [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+scalar DateTime
+
+# Leverages the internal Python implmeentation of UUID (uuid.UUID) to provide native UUID objects
+# in fields, resolvers and input.
+scalar UUID
+
