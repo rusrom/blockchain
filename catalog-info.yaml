@@ -16,3 +16,7 @@ spec:
   providesApis:
     - blockchain-rest
     - blockchain-graphql
+  consumesApis:
+    - js-learning
+    - queue-proxy
+    - www-artist
